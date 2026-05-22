@@ -57,7 +57,7 @@ textarea#memo{min-height:150px;overflow:hidden;resize:vertical;line-height:1.6}
 
 <label>🌙 수면</label>
 <select id="sleep">
-<option>좋음</option><option>보통</option><option>나쁨</option><option>새벽각성/분절수면</option><option>낮잠/졸림 많음</option>
+<option>좋음</option><option>보통</option><option>나쁨</option><option>새벽각성/분절수면</option><option>낮잠/피곤함/졸림 많음</option>
 </select>
 
 <label>🕒 총수면</label>
@@ -84,12 +84,12 @@ textarea#memo{min-height:150px;overflow:hidden;resize:vertical;line-height:1.6}
 <div class="checkGrid">
 <label class="checkItem"><input type="checkbox" id="cond_stable">안정적임</label>
 <label class="checkItem"><input type="checkbox" id="cond_sensitive">예민함</label>
-<label class="checkItem"><input type="checkbox" id="cond_anxiety">피로함</label>
+<label class="checkItem"><input type="checkbox" id="cond_anxiety">조절하려함</label>
 <label class="checkItem"><input type="checkbox" id="cond_transition">불안함</label>
 <label class="checkItem"><input type="checkbox" id="cond_waiting">기다림 어려움</label>
 <label class="checkItem"><input type="checkbox" id="cond_crying">울음</label>
-<label class="checkItem"><input type="checkbox" id="cond_sleepy">졸림</label>
-<label class="checkItem"><input type="checkbox" id="cond_stim">특이행동</label>
+<label class="checkItem"><input type="checkbox" id="cond_sleepy">피곤함/졸림</label>
+<label class="checkItem"><input type="checkbox" id="cond_stim">텐트럼</label>
 </div>
 
 <label>💊 복용약</label>
@@ -167,8 +167,8 @@ const medMap=[
 ];
 
 const conditionMap=[
-["cond_stable","안정적임"],["cond_sensitive","예민함"],["cond_anxiety","피로함"],["cond_transition","불안함"],
-["cond_waiting","기다림 어려움"],["cond_crying","울음"],["cond_sleepy","졸림"],["cond_stim","특이행동"]
+["cond_stable","안정적임"],["cond_sensitive","예민함"],["cond_anxiety","조절하려함"],["cond_transition","불안함"],
+["cond_waiting","기다림 어려움"],["cond_crying","울음"],["cond_sleepy","피곤함/졸림"],["cond_stim","텐트럼"]
 ];
 
 function getCheckedList(map){
@@ -268,8 +268,8 @@ function levelDot(value){
 
   if(value.includes("없음")) cls = "dotNone";
   else if(value.includes("좋음") || value.includes("안정적임")) cls = "dotGood";
-  else if(value.includes("보통") || value.includes("약함") || value.includes("피로함") || value.includes("졸림")) cls = "dotNormal";
-  else if(value.includes("조금") || value.includes("중간") || value.includes("귀") || value.includes("허벅지") || value.includes("불안함") || value.includes("기다림") || value.includes("울음") || value.includes("특이행동")) cls = "dotMild";
+  else if(value.includes("보통") || value.includes("약함") || value.includes("조절하려함") || value.includes("피곤함/졸림")) cls = "dotNormal";
+  else if(value.includes("조금") || value.includes("중간") || value.includes("귀") || value.includes("허벅지") || value.includes("불안함") || value.includes("기다림") || value.includes("울음") || value.includes("텐트럼")) cls = "dotMild";
   else if(value.includes("나쁨") || value.includes("심함") || value.includes("멍") || value.includes("상처")) cls = "dotBad";
 
   return `<span class="colorDot ${cls}"></span>`;
