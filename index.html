@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>시엘 수면 및 컨디션</title>
+<meta name="description" content="시엘 수면 및 컨디션 기록">
+<meta property="og:title" content="시엘 수면 및 컨디션">
+<meta property="og:description" content="수면, 컨디션, 공격성, 자해, 복용 기록을 간단히 체크하는 기록표">
+<link rel="icon" type="image/png" href="icon.png">
+<link rel="apple-touch-icon" href="icon.png">
+<meta name="theme-color" content="#f5f7fb">
+<style>
+body{font-family:Arial,"Noto Sans KR",sans-serif;background:#f5f7fb;margin:0;padding:16px;color:#222}
+.container{max-width:520px;margin:auto}
+h1{text-align:center;font-size:25px;margin:10px 0 6px}
+.subtitle{text-align:center;font-size:14px;color:#666;margin-bottom:14px}
+.card{background:#fff;border-radius:20px;padding:18px;margin-bottom:14px;box-shadow:0 2px 10px rgba(0,0,0,.08)}
+label{display:block;margin-top:12px;font-weight:700;font-size:16px}
+select,textarea,button,input{width:100%;box-sizing:border-box;padding:12px;border-radius:12px;border:1px solid #ddd;margin-top:6px;font-size:16px;background:white}
+button{background:#5b8def;color:white;border:none;font-weight:800;margin-top:16px}
+button:active{transform:scale(.98)}
+.small{font-size:13px;color:#666;line-height:1.5}
+.notice{font-size:14px;color:#2450a4;background:#eef4ff;border-radius:12px;padding:10px;margin-top:10px}
+.record{border-bottom:1px solid #e6e6e6;padding:12px 4px;font-size:14px;line-height:1.6;cursor:pointer;border-radius:12px}
+.record:active{background:#eef4ff}
+.recordDate{font-size:17px;font-weight:800;color:#2450a4}
+.recordMemo{background:#fff4f7;border-radius:10px;padding:8px 10px;margin-top:8px;white-space:pre-line;line-height:1.6}
+.colorDot{display:inline-block;width:10px;height:10px;border-radius:50%;margin:0 5px 1px 4px;vertical-align:middle}
+.dotGood{background:#10b95a}
+.dotNormal{background:#ffd966}
+.dotMild{background:#ff8a2a}
+.dotBad{background:#d90000}
+.dotNone{background:#b5b5b5}
+
+.actions{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.danger{background:#999}
+.today{background:#fff9e8;border-radius:12px;padding:10px;margin-top:10px;font-size:14px;line-height:1.5}
+.green{background:#5aa96b}
+.row2,.checkGrid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.checkGrid{margin-top:8px}
+.checkItem{background:#f5f7fb;border-radius:12px;padding:10px;display:flex;align-items:center;gap:8px;font-size:15px}
+.checkItem input{width:auto;margin:0}
+.sectionTitle{margin-top:16px;font-size:15px;font-weight:800;color:#2450a4}
+textarea#memo{min-height:150px;overflow:hidden;resize:vertical;line-height:1.6}
+</style>
+</head>
+<body>
+<div class="container">
+<h1>시엘 수면 및 컨디션</h1>
+<div class="subtitle">부부 공유 저장 · 날짜 선택 · 하루 1개 기록</div>
+
+<div class="card">
+<label>📅 기록 날짜</label>
+<input type="date" id="recordDate" onchange="loadSelectedDate()">
+<div class="today" id="dateInfo"></div>
+
+<label>🌙 수면</label>
+<select id="sleep">
+<option>좋음</option><option>보통</option><option>나쁨</option><option>새벽각성/분절수면</option><option>낮잠/졸림 많음</option>
+</select>
+
+<label>🕒 총수면시간</label>
+<div class="row2">
+<select id="sleepHours">
+<option value="">시간</option><option>4</option><option>5</option><option>6</option><option>7</option><option>8</option><option>9</option><option>10</option><option>11</option><option>12</option>
+</select>
+<select id="sleepMinutes">
+<option value="">분</option><option>0</option><option>10</option><option>20</option><option>30</option><option>40</option><option>50</option>
+</select>
+</div>
+
+<label>👦 공격성</label>
+<select id="aggression">
+<option>0 없음</option><option>1 약함</option><option>2 조금 있음</option><option>3 중간</option><option>4 심함</option><option>5 매우 심함</option>
+</select>
+
+<label>😣 자해</label>
+<select id="selfharm">
+<option>없음</option><option>머리/얼굴 약하게</option><option>귀 때림</option><option>허벅지 때림</option><option>멍/상처 있음</option><option>심함</option>
+</select>
+
+<label>🌡️ 컨디션</label>
+<div class="checkGrid">
+<label class="checkItem"><input type="checkbox" id="cond_stable">안정적임</label>
+<label class="checkItem"><input type="checkbox" id="cond_sensitive">예민함</label>
+<label class="checkItem"><input type="checkbox" id="cond_anxiety">피로함</label>
+<label class="checkItem"><input type="checkbox" id="cond_transition">불안함</label>
+<label class="checkItem"><input type="checkbox" id="cond_waiting">기다림 어려움</label>
+<label class="checkItem"><input type="checkbox" id="cond_crying">울음</label>
+<label class="checkItem"><input type="checkbox" id="cond_sleepy">졸림</label>
+<label class="checkItem"><input type="checkbox" id="cond_stim">특이행동</label>
+</div>
+
+<label>💊 복용약</label>
+<div class="sectionTitle">처방약 / 수면 관련</div>
+<div class="checkGrid">
+<label class="checkItem"><input type="checkbox" id="med_risperidone">리스페리돈</label>
+<label class="checkItem"><input type="checkbox" id="med_melatonin">멜라토닌</label>
+<label class="checkItem"><input type="checkbox" id="med_sleep">명세핀</label>
+<label class="checkItem"><input type="checkbox" id="med_otherdrug">기타약</label>
+</div>
+
+<div class="sectionTitle">영양제 / 보충제</div>
+<div class="checkGrid">
+<label class="checkItem"><input type="checkbox" id="med_b2">B2</label>
+<label class="checkItem"><input type="checkbox" id="med_vitc">비타민C</label>
+<label class="checkItem"><input type="checkbox" id="med_vitd">비타민D</label>
+<label class="checkItem"><input type="checkbox" id="med_probiotics">유산균</label>
+<label class="checkItem"><input type="checkbox" id="med_omega3">오메가3</label>
+<label class="checkItem"><input type="checkbox" id="med_othersupp">기타영양제</label>
+</div>
+
+<label>📝 메모</label>
+<textarea id="memo" rows="7" oninput="autoResizeMemo()"></textarea>
+
+<button onclick="saveSelectedDate()">선택한 날짜 기록 저장/수정</button>
+<button class="green" onclick="resetForNewDate()">입력칸 비우기</button>
+<div id="saved" class="notice" style="display:none"></div>
+</div>
+
+<div class="card">
+<h2>저장된 기록</h2>
+
+<div id="records"></div>
+</div>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyC9rJ7WYoyQjYNDXQYgqCmqLUFrMb0Mubk",
+  authDomain: "siel-record.firebaseapp.com",
+  projectId: "siel-record",
+  storageBucket: "siel-record.firebasestorage.app",
+  messagingSenderId: "209424604400",
+  appId: "1:209424604400:web:5cc979d6490eb8aada3635"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+const cloudDoc = doc(db, "shared", "all_records");
+
+function todayKey(){return new Date().toISOString().slice(0,10)}
+function nowText(){return new Date().toLocaleString("ko-KR")}
+
+async function getRecords(){
+  try{
+    const snap = await getDoc(cloudDoc);
+    return snap.exists() ? (snap.data().records || []) : [];
+  }catch(e){
+    alert("Firebase 연결 오류입니다. Firestore가 테스트 모드인지 확인해주세요.");
+    console.error(e);
+    return [];
+  }
+}
+
+async function setRecords(records){
+  await setDoc(cloudDoc, {records: records, updatedAt: nowText()});
+}
+
+const medMap=[
+["med_risperidone","리스페리돈"],["med_melatonin","멜라토닌"],["med_sleep","명세핀"],["med_otherdrug","기타약"],
+["med_b2","B2"],["med_vitc","비타민C"],["med_vitd","비타민D"],["med_probiotics","유산균"],["med_omega3","오메가3"],["med_othersupp","기타영양제"]
+];
+
+const conditionMap=[
+["cond_stable","안정적임"],["cond_sensitive","예민함"],["cond_anxiety","피로함"],["cond_transition","불안함"],
+["cond_waiting","기다림 어려움"],["cond_crying","울음"],["cond_sleepy","졸림"],["cond_stim","특이행동"]
+];
+
+function getCheckedList(map){
+  let list=[];
+  map.forEach(([id,name])=>{if(document.getElementById(id).checked)list.push(name)});
+  return list;
+}
+
+function setChecks(map,selected){
+  selected=selected||[];
+  map.forEach(([id,name])=>{document.getElementById(id).checked=selected.includes(name)});
+}
+
+function defaultForm(){
+  document.getElementById("sleep").value="보통";
+  document.getElementById("sleepHours").value="";
+  document.getElementById("sleepMinutes").value="";
+  document.getElementById("aggression").value="0 없음";
+  document.getElementById("selfharm").value="없음";
+  document.getElementById("memo").value="";
+  setTimeout(autoResizeMemo, 0);
+  setChecks(medMap,[]);
+  setChecks(conditionMap,[]);
+}
+
+function fillForm(r){
+  document.getElementById("sleep").value=r.sleep||"보통";
+  document.getElementById("sleepHours").value=r.sleepHours||"";
+  document.getElementById("sleepMinutes").value=r.sleepMinutes||"";
+  document.getElementById("aggression").value=r.aggression||"0 없음";
+  document.getElementById("selfharm").value=r.selfharm||"없음";
+  document.getElementById("memo").value=r.memo||"";
+  setTimeout(autoResizeMemo, 0);
+  setChecks(medMap,r.medicine||[]);
+  setChecks(conditionMap,r.condition||[]);
+}
+
+window.loadSelectedDate = async function(){
+  const key=document.getElementById("recordDate").value;
+  const records=await getRecords();
+  const found=records.find(r=>r.key===key);
+  const el=document.getElementById("dateInfo");
+  document.getElementById("saved").style.display="none";
+  if(found){fillForm(found);el.innerHTML="<b>"+key+" 기록 있음</b><br>내용 수정 후 저장 가능합니다."}
+  else{defaultForm();el.innerHTML="<b>"+key+" 기록 없음</b>"}
+}
+
+function sleepTotalText(){
+  const h=document.getElementById("sleepHours").value;
+  const m=document.getElementById("sleepMinutes").value;
+  if(!h&&!m)return "";
+  return `${h||0}시간 ${m||0}분`;
+}
+
+window.saveSelectedDate = async function(){
+  const key=document.getElementById("recordDate").value;
+  if(!key){alert("날짜 선택");return}
+  let records=await getRecords();
+  const existingIndex=records.findIndex(r=>r.key===key);
+  const data={
+    key:key,date:key,lastUpdated:nowText(),
+    sleep:document.getElementById("sleep").value,
+    sleepHours:document.getElementById("sleepHours").value,
+    sleepMinutes:document.getElementById("sleepMinutes").value,
+    sleepTotal:sleepTotalText(),
+    aggression:document.getElementById("aggression").value,
+    selfharm:document.getElementById("selfharm").value,
+    condition:getCheckedList(conditionMap),
+    medicine:getCheckedList(medMap),
+    memo:document.getElementById("memo").value
+  };
+  if(existingIndex>=0)records[existingIndex]=data; else records.unshift(data);
+  records.sort((a,b)=>b.key.localeCompare(a.key));
+  await setRecords(records);
+  document.getElementById("saved").style.display="block";
+  document.getElementById("saved").innerText="Firebase 공유 저장 완료";
+  await loadRecords();
+autoResizeMemo();
+}
+
+
+
+
+function getKoreanWeekday(dateStr){
+  const days = ["일","월","화","수","목","금","토"];
+  const d = new Date(dateStr);
+  return days[d.getDay()];
+}
+
+function cleanAggression(value){
+  return String(value || "").replace(/^\d+\s*/, "");
+}
+
+function levelDot(value){
+  value = String(value || "");
+  let cls = "dotNormal";
+
+  if(value.includes("없음")) cls = "dotNone";
+  else if(value.includes("좋음") || value.includes("안정적임")) cls = "dotGood";
+  else if(value.includes("보통") || value.includes("약함") || value.includes("피로함") || value.includes("졸림")) cls = "dotNormal";
+  else if(value.includes("조금") || value.includes("중간") || value.includes("귀") || value.includes("허벅지") || value.includes("불안함") || value.includes("기다림") || value.includes("울음") || value.includes("특이행동")) cls = "dotMild";
+  else if(value.includes("나쁨") || value.includes("심함") || value.includes("멍") || value.includes("상처")) cls = "dotBad";
+
+  return `<span class="colorDot ${cls}"></span>`;
+}
+
+function conditionDots(list){
+  if(!list || list.length===0) return `<span class="colorDot dotNone"></span>-`;
+  return list.map(v => `${levelDot(v)}${v}`).join(", ");
+}
+
+window.loadRecords = async function(){
+  const records=await getRecords();
+  if(records.length===0){document.getElementById("records").innerHTML="기록 없음";return}
+  document.getElementById("records").innerHTML=records.map(r=>`
+    <div class="record" onclick="editRecord('${r.key}')">
+      <div class="recordDate">📅 ${r.date} (${getKoreanWeekday(r.date)})</div>
+      🌙 수면: ${levelDot(r.sleep)}${r.sleep} / 🕒 총수면시간: ${r.sleepTotal||"-"}<br>
+      👦 공격성: ${levelDot(r.aggression)}${cleanAggression(r.aggression)} / 😣 자해: ${levelDot(r.selfharm)}${r.selfharm}<br>
+      🌿 컨디션: ${(r.condition||[]).join(", ")||"-"}<br>
+      💊 복용약: ${(r.medicine||[]).join(", ")||"-"}<br>
+      <div class="recordMemo">${r.memo||"-"}</div>
+    </div>
+  `).join("");
+}
+
+window.editRecord = async function(key){
+  document.getElementById("recordDate").value=key;
+  await loadSelectedDate();
+  window.scrollTo({top:0,behavior:"smooth"});
+}
+
+
+function autoResizeMemo(){
+  const memo = document.getElementById("memo");
+  if(!memo) return;
+  memo.style.height = "auto";
+  memo.style.height = memo.scrollHeight + "px";
+}
+
+window.resetForNewDate = function(){
+  defaultForm();
+  document.getElementById("saved").style.display="none";
+}
+
+window.downloadCSV = async function(){
+  const records=await getRecords();
+  if(records.length===0){alert("기록 없음");return}
+  const header=["날짜","수면","총수면","공격성","자해","컨디션","복용약","메모"];
+  const rows=records.map(r=>[r.date,r.sleep,r.sleepTotal,r.aggression,r.selfharm,(r.condition||[]).join(", "),(r.medicine||[]).join(", "),r.memo]);
+  const csv=[header,...rows].map(row=>row.map(v=>`"${String(v||"").replaceAll('"','""')}"`).join(",")).join("\n");
+  const blob=new Blob(["\ufeff"+csv],{type:"text/csv;charset=utf-8;"});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement("a");
+  a.href=url;a.download="siel_daily_records.csv";a.click();
+  URL.revokeObjectURL(url);
+}
+
+window.clearAll = async function(){
+  if(confirm("전체 삭제할까요?")){
+    await setRecords([]);
+    defaultForm();
+    await loadRecords();
+autoResizeMemo();
+  }
+}
+
+document.getElementById("recordDate").value=todayKey();
+await loadSelectedDate();
+await loadRecords();
+autoResizeMemo();
+</script>
+</body>
+</html>
