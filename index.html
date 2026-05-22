@@ -60,7 +60,7 @@ textarea#memo{min-height:150px;overflow:hidden;resize:vertical;line-height:1.6}
 <option>좋음</option><option>보통</option><option>나쁨</option><option>새벽각성/분절수면</option><option>낮잠/졸림 많음</option>
 </select>
 
-<label>🕒 총수면시간</label>
+<label>🕒 총수면</label>
 <div class="row2">
 <select id="sleepHours">
 <option value="">시간</option><option>4</option><option>5</option><option>6</option><option>7</option><option>8</option><option>9</option><option>10</option><option>11</option><option>12</option>
@@ -286,7 +286,7 @@ window.loadRecords = async function(){
   document.getElementById("records").innerHTML=records.map(r=>`
     <div class="record" onclick="editRecord('${r.key}')">
       <div class="recordDate">📅 ${r.date} (${getKoreanWeekday(r.date)})</div>
-      <b>🌙 수면:</b> ${levelDot(r.sleep)}${r.sleep} &nbsp;&nbsp; <b>🕒 총수면시간:</b> ${r.sleepTotal||"-"}<br>
+      <b>🌙 수면:</b> ${levelDot(r.sleep)}${r.sleep} &nbsp;&nbsp; <b>🕒 총수면:</b> ${r.sleepTotal||"-"}<br>
       <b>👦 공격성:</b> ${levelDot(r.aggression)}${cleanAggression(r.aggression)} &nbsp;&nbsp; <b>😣 자해:</b> ${levelDot(r.selfharm)}${r.selfharm}<br>
       <b>🌿 컨디션:</b> ${(r.condition||[]).join(", ")||"-"}<br>
       <b>💊 복용약:</b> ${(r.medicine||[]).join(", ")||"-"}<br>
