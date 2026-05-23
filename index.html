@@ -42,7 +42,7 @@ button:active{transform:scale(.98)}
 .checkItem{background:#f5f7fb;border-radius:12px;padding:10px;display:flex;align-items:center;gap:8px;font-size:15px}
 .checkItem input{width:auto;margin:0}
 .sectionTitle{margin-top:16px;font-size:15px;font-weight:800;color:#2450a4}
-textarea#memo{min-height:150px;overflow:hidden;resize:vertical;line-height:1.6}
+textarea#memo{min-height:150px;max-height:320px;overflow-y:auto;resize:vertical;line-height:1.6}
 </style>
 </head>
 <body>
@@ -389,7 +389,10 @@ function autoResizeMemo(){
   const memo = document.getElementById("memo");
   if(!memo) return;
   memo.style.height = "auto";
-  memo.style.height = memo.scrollHeight + "px";
+  const maxHeight = 320;
+  const newHeight = Math.min(memo.scrollHeight, maxHeight);
+  memo.style.height = newHeight + "px";
+  memo.style.overflowY = memo.scrollHeight > maxHeight ? "auto" : "hidden";
 }
 
 window.resetForNewDate = function(){
