@@ -42,7 +42,7 @@ button:active{transform:scale(.98)}
 .checkItem{background:#f5f7fb;border-radius:12px;padding:10px;display:flex;align-items:center;gap:8px;font-size:15px}
 .checkItem input{width:auto;margin:0}
 .sectionTitle{margin-top:16px;font-size:15px;font-weight:800;color:#2450a4}
-textarea#memo{min-height:150px;max-height:320px;overflow-y:auto;resize:vertical;line-height:1.6}
+textarea#memo{height:190px;min-height:190px;max-height:190px;overflow-y:scroll;resize:vertical;line-height:1.6;-webkit-overflow-scrolling:touch;}
 </style>
 </head>
 <body>
@@ -112,7 +112,7 @@ textarea#memo{min-height:150px;max-height:320px;overflow-y:auto;resize:vertical;
 </div>
 
 <label>📝 메모</label>
-<textarea id="memo" rows="7" oninput="autoResizeMemo()"></textarea>
+<textarea id="memo" rows="7"></textarea>
 
 <button onclick="saveSelectedDate()">선택한 날짜 기록 저장/수정</button>
 <button class="green" onclick="resetForNewDate()">입력칸 비우기</button>
@@ -388,11 +388,8 @@ window.editRecord = async function(key){
 function autoResizeMemo(){
   const memo = document.getElementById("memo");
   if(!memo) return;
-  memo.style.height = "auto";
-  const maxHeight = 320;
-  const newHeight = Math.min(memo.scrollHeight, maxHeight);
-  memo.style.height = newHeight + "px";
-  memo.style.overflowY = memo.scrollHeight > maxHeight ? "auto" : "hidden";
+  memo.style.height = "190px";
+  memo.style.overflowY = "scroll";
 }
 
 window.resetForNewDate = function(){
