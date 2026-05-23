@@ -146,25 +146,6 @@ const cloudDoc = doc(db, "shared", "all_records");
 function todayKey(){return new Date().toISOString().slice(0,10)}
 function nowText(){return new Date().toLocaleString("ko-KR")}
 
-function normalizeDateKey(value){
-  value = String(value || "").trim();
-  if(!value) return "";
-  const m = value.match(/(\d{4})\D+(\d{1,2})\D+(\d{1,2})/);
-  if(m){
-    return m[1] + "-" + String(m[2]).padStart(2,"0") + "-" + String(m[3]).padStart(2,"0");
-  }
-  return value.slice(0,10);
-}
-
-function getRecordKey(r){
-  return normalizeDateKey(r.key || r.date || "");
-}
-
-function findRecordIndex(records, key){
-  const nkey = normalizeDateKey(key);
-  return records.findIndex(r => getRecordKey(r) === nkey);
-}
-
 async function getRecords(){
   try{
     const snap = await getDoc(cloudDoc);
@@ -226,19 +207,13 @@ function fillForm(r){
 }
 
 window.loadSelectedDate = async function(){
-  const key=normalizeDateKey(document.getElementById("recordDate").value);
+  const key=document.getElementById("recordDate").value;
   const records=await getRecords();
-  const foundIndex=findRecordIndex(records,key);
-  const found=foundIndex>=0 ? records[foundIndex] : null;
+  const found=records.find(r=>r.key===key);
   const el=document.getElementById("dateInfo");
   document.getElementById("saved").style.display="none";
-  if(found){
-    fillForm(found);
-    el.innerHTML="<b>"+key+" 기록 있음</b><br>내용 수정 후 저장 가능합니다.";
-  } else {
-    defaultForm();
-    el.innerHTML="<b>"+key+" 기록 없음</b>";
-  }
+  if(found){fillForm(found);el.innerHTML="<b>"+key+" 기록 있음</b><br>내용 수정 후 저장 가능합니다."}
+  else{defaultForm();el.innerHTML="<b>"+key+" 기록 없음</b>"}
 }
 
 function sleepTotalText(){
@@ -249,10 +224,10 @@ function sleepTotalText(){
 }
 
 window.saveSelectedDate = async function(){
-  const key=normalizeDateKey(document.getElementById("recordDate").value);
+  const key=document.getElementById("recordDate").value;
   if(!key){alert("날짜 선택");return}
   let records=await getRecords();
-  const existingIndex=findRecordIndex(records,key);
+  const existingIndex=records.findIndex(r=>r.key===key);
   const data={
     key:key,date:key,lastUpdated:nowText(),
     sleep:document.getElementById("sleep").value,
@@ -266,7 +241,7 @@ window.saveSelectedDate = async function(){
     memo:document.getElementById("memo").value
   };
   if(existingIndex>=0)records[existingIndex]=data; else records.unshift(data);
-  records.sort((a,b)=>getRecordKey(b).localeCompare(getRecordKey(a)));
+  records.sort((a,b)=>b.key.localeCompare(a.key));
   await setRecords(records);
   document.getElementById("saved").style.display="block";
   document.getElementById("saved").innerText="Firebase 공유 저장 완료";
@@ -309,8 +284,8 @@ window.loadRecords = async function(){
   const records=await getRecords();
   if(records.length===0){document.getElementById("records").innerHTML="기록 없음";return}
   document.getElementById("records").innerHTML=records.map(r=>`
-    <div class="record" onclick="editRecord('${getRecordKey(r)}')">
-      <div class="recordDate">📅 ${getRecordKey(r)} (${getKoreanWeekday(getRecordKey(r))})</div>
+    <div class="record" onclick="editRecord('${r.key}')">
+      <div class="recordDate">📅 ${r.date} (${getKoreanWeekday(r.date)})</div>
       <b>🌙 수면:</b> ${levelDot(r.sleep)}${r.sleep} &nbsp;&nbsp; <b>🕒 총수면:</b> ${r.sleepTotal||"-"}<br>
       <b>👦 공격성:</b> ${levelDot(r.aggression)}${cleanAggression(r.aggression)} &nbsp;&nbsp; <b>😣 자해:</b> ${levelDot(r.selfharm)}${r.selfharm}<br>
       <b>🌿 컨디션:</b> ${(r.condition||[]).join(", ")||"-"}<br>
@@ -321,7 +296,6 @@ window.loadRecords = async function(){
 }
 
 window.editRecord = async function(key){
-  key = normalizeDateKey(key);
   document.getElementById("recordDate").value=key;
   await loadSelectedDate();
   window.scrollTo({top:0,behavior:"smooth"});
