@@ -390,6 +390,7 @@ window.loadRecords = async function(){
       <b>🌿 컨디션:</b> ${(r.condition||[]).join(", ")||"-"}<br>
       <b>💊 복용약:</b> ${(r.medicine||[]).join(", ")||"-"}<br>
       <div class="recordMemo">${r.memo||"-"}</div>
+      ${r.growthMemo ? `<div style="background:#ffe08a;border-radius:10px;padding:6px 8px;margin-top:6px;font-weight:700">🌳 성장 메모: ${r.growthMemo}</div>` : ""}
     </div>`;
   }).join("");
 
