@@ -28,6 +28,7 @@ button:active{transform:scale(.98)}
 .checkItem{background:#f5f7fb;border-radius:12px;padding:10px;display:flex;align-items:center;gap:8px;font-size:15px}
 .checkItem input{width:auto;margin:0}
 .sectionTitle{margin-top:16px;font-size:15px;font-weight:800;color:#2450a4}
+.growthBox{background:#ffe680;border:2px solid #f2c94c;border-radius:14px;padding:12px}
 .growthBox{background:#ffe28a;border:1px solid #f2c94c;border-radius:16px;padding:12px;margin-top:8px}
 .growthBox textarea{background:#fff8dc;border:1px solid #e6c44f;margin-top:6px}
 .growthRecord{background:#fff1a8;border-radius:12px;padding:9px 10px;margin:8px 0;font-weight:700;color:#5c4300}
@@ -104,6 +105,51 @@ button:active{transform:scale(.98)}
 <label class="checkItem"><input type="checkbox" id="gut_constipation">변비</label>
 <label class="checkItem"><input type="checkbox" id="gut_pain">배아픔 표현</label>
 <label class="checkItem"><input type="checkbox" id="gut_appetite">식욕저하</label>
+</div>
+
+
+<label>🔋 신경계 배터리</label>
+<select id="battery">
+<option>매우 안정</option>
+<option>안정</option>
+<option>피로 누적</option>
+<option>붕괴 직전</option>
+<option>완전 방전</option>
+</select>
+
+<label>😭 졸림 저항</label>
+<select id="sleepResistance">
+<option>없음</option>
+<option>약함</option>
+<option>중간</option>
+<option>강함</option>
+<option>오열/얼굴때림 동반</option>
+</select>
+
+<label>⏰ 기상 후 붕괴 시작 시점</label>
+<select id="meltdownTime">
+<option>없음</option>
+<option>기상 후 30분</option>
+<option>기상 후 1시간</option>
+<option>기상 후 2시간</option>
+<option>오전 늦게</option>
+<option>오후</option>
+<option>저녁</option>
+<option>이동 후</option>
+</select>
+
+<label>💩 장 상태</label>
+<div class="checkGrid">
+<label class="checkItem"><input type="checkbox" id="gut_normal">정상</label>
+<label class="checkItem"><input type="checkbox" id="gut_loose">묽은변</label>
+<label class="checkItem"><input type="checkbox" id="gut_diarrhea">설사</label>
+<label class="checkItem"><input type="checkbox" id="gut_constipation">변비</label>
+<label class="checkItem"><input type="checkbox" id="gut_pain">배아픔 표현</label>
+</div>
+
+<label>🌱 오늘의 성장 신호</label>
+<div class="growthBox">
+<textarea id="growthMemo" rows="2" placeholder="시엘이의 긍정적인 성장과 표현을 짧게 기록해주세요"></textarea>
 </div>
 
 <label>🌡️ 컨디션</label>
@@ -215,6 +261,11 @@ function fillForm(r){
   document.getElementById("meltdownStart").value=r.meltdownStart||"미기록";
   document.getElementById("growthMemo").value=r.growthMemo||"";
   document.getElementById("memo").value=r.memo||"";
+  document.getElementById("battery").value=r.battery||"안정";
+  document.getElementById("sleepResistance").value=r.sleepResistance||"없음";
+  document.getElementById("meltdownTime").value=r.meltdownTime||"없음";
+  document.getElementById("growthMemo").value=r.growthMemo||"";
+  setChecks(gutMap,r.gut||[]);
   setChecks(medMap,r.medicine||[]);
   setChecks(conditionMap,r.condition||[]);
   setChecks(gutMap,r.gut||[]);
@@ -248,6 +299,11 @@ function saveSelectedDate(){
     sleepTotal:sleepTotalText(),
     aggression:document.getElementById("aggression").value,
     selfharm:document.getElementById("selfharm").value,
+    battery:document.getElementById("battery").value,
+    sleepResistance:document.getElementById("sleepResistance").value,
+    meltdownTime:document.getElementById("meltdownTime").value,
+    gut:getCheckedList(gutMap),
+    growthMemo:document.getElementById("growthMemo").value,
     nerveBattery:document.getElementById("nerveBattery").value,
     sleepResistance:document.getElementById("sleepResistance").value,
     meltdownStart:document.getElementById("meltdownStart").value,
