@@ -149,19 +149,13 @@ function todayKey(){
   const tz=d.getTimezoneOffset()*60000;
   return new Date(d-tz).toISOString().slice(0,10);
 }
-function nowText(){
-  return new Date().toLocaleString("ko-KR");
-}
+function nowText(){return new Date().toLocaleString("ko-KR");}
 function getRecords(){
   try{return JSON.parse(localStorage.getItem(STORAGE_KEY)||"[]")}
   catch(e){return []}
 }
-function setRecords(records){
-  localStorage.setItem(STORAGE_KEY,JSON.stringify(records));
-}
-function getCheckedList(map){
-  return Object.keys(map).filter(id=>document.getElementById(id)?.checked).map(id=>map[id]);
-}
+function setRecords(records){localStorage.setItem(STORAGE_KEY,JSON.stringify(records));}
+function getCheckedList(map){return Object.keys(map).filter(id=>document.getElementById(id)?.checked).map(id=>map[id]);}
 function setChecks(map,values){
   Object.keys(map).forEach(id=>{
     const el=document.getElementById(id);
