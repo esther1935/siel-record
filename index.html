@@ -540,5 +540,30 @@ await loadSelectedDate();
 await loadRecords();
 autoResizeMemo();
 </script>
+
+<script>
+document.addEventListener("DOMContentLoaded", function(){
+
+  const originalSave = window.saveRecord;
+
+  if(typeof originalSave === "function"){
+    window.saveRecord = async function(){
+
+      // 현재 select 상태 강제 반영
+      document.querySelectorAll("select").forEach(sel=>{
+        sel.dispatchEvent(new Event("change",{bubbles:true}));
+      });
+
+      // checkbox 상태 강제 반영
+      document.querySelectorAll('input[type="checkbox"]').forEach(chk=>{
+        chk.dispatchEvent(new Event("change",{bubbles:true}));
+      });
+
+      return await originalSave.apply(this, arguments);
+    }
+  }
+});
+</script>
+
 </body>
 </html>
