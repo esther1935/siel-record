@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>시엘 수면 및 컨디션</title>
+<style>
+body{font-family:Arial,"Noto Sans KR",sans-serif;background:#f5f7fb;margin:0;padding:16px;color:#222}
+.container{max-width:520px;margin:auto}
+h1{text-align:center;font-size:25px;margin:10px 0 6px}
+.subtitle{text-align:center;font-size:14px;color:#666;margin-bottom:14px}
+.card{background:#fff;border-radius:20px;padding:18px;margin-bottom:14px;box-shadow:0 2px 10px rgba(0,0,0,.08)}
+label{display:block;margin-top:12px;font-weight:700;font-size:16px}
+select,textarea,button,input{width:100%;box-sizing:border-box;padding:12px;border-radius:12px;border:1px solid #ddd;margin-top:6px;font-size:16px;background:white}
+button{background:#5b8def;color:white;border:none;font-weight:800;margin-top:16px}
+button:active{transform:scale(.98)}
+.small{font-size:13px;color:#666;line-height:1.5}
+.notice{font-size:14px;color:#2450a4;background:#eef4ff;border-radius:12px;padding:10px;margin-top:10px}
+.record{border-bottom:1px solid #e6e6e6;padding:12px 4px;font-size:14px;line-height:1.6;cursor:pointer;border-radius:12px}
+.record:active{background:#eef4ff}
+.recordDate{font-size:17px;font-weight:800;color:#2450a4}
+.actions{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.danger{background:#999}
+.today{background:#fff9e8;border-radius:12px;padding:10px;margin-top:10px;font-size:14px;line-height:1.5}
+.green{background:#5aa96b}
+.row2,.checkGrid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.checkGrid{margin-top:8px}
+.checkItem{background:#f5f7fb;border-radius:12px;padding:10px;display:flex;align-items:center;gap:8px;font-size:15px}
+.checkItem input{width:auto;margin:0}
+.sectionTitle{margin-top:16px;font-size:15px;font-weight:800;color:#2450a4}
+.growthBox{background:#ffe28a;border:1px solid #f2c94c;border-radius:16px;padding:12px;margin-top:8px}
+.growthBox textarea{background:#fff8dc;border:1px solid #e6c44f;margin-top:6px}
+.growthRecord{background:#fff1a8;border-radius:12px;padding:9px 10px;margin:8px 0;font-weight:700;color:#5c4300}
+.helper{font-size:12px;color:#666;margin-top:5px;line-height:1.4}
+</style>
+<meta name="description" content="시엘 수면 및 컨디션 기록">
+<meta property="og:title" content="시엘 수면 및 컨디션">
+<meta property="og:description" content="수면, 컨디션, 공격성, 자해, 복용 기록을 간단히 체크하는 기록표">
+
+<link rel="icon" type="image/png" href="icon.png">
+<link rel="apple-touch-icon" href="icon.png">
+<meta name="theme-color" content="#f5f7fb">
+
+</head>
+<body>
+<div class="container">
+<h1>시엘 수면 및 컨디션</h1>
+<div class="subtitle">날짜 선택 · 하루 1개 기록 · 날짜 누르면 수정</div>
+
+<div class="card">
+<label>📅 기록 날짜</label>
+<input type="date" id="recordDate" onchange="loadSelectedDate()">
+<div class="today" id="dateInfo"></div>
+
+<label>😴 수면 상태</label>
+<select id="sleep">
+<option>좋음</option><option>보통</option><option>나쁨</option><option>새벽각성</option><option>낮잠/졸림 많음</option>
+</select>
+
+<label>🌙 총수면시간</label>
+<div class="row2">
+<select id="sleepHours">
+<option value="">시간</option>
+<option>4</option><option>5</option><option>6</option><option>7</option><option>8</option><option>9</option><option>10</option><option>11</option><option>12</option>
+</select>
+<select id="sleepMinutes">
+<option value="">분</option>
+<option>0</option><option>10</option><option>20</option><option>30</option><option>40</option><option>50</option>
+</select>
+</div>
+
+<label>😡 공격성 강도</label>
+<select id="aggression">
+<option>0 없음</option><option>1 약함</option><option>2 조금 있음</option><option>3 중간</option><option>4 심함</option><option>5 매우 심함</option>
+</select>
+
+<label>😣 자해</label>
+<select id="selfharm">
+<option>없음</option><option>머리/얼굴 약하게</option><option>귀 때림</option><option>허벅지 때림</option><option>멍/상처 있음</option><option>심함</option>
+</select>
+
+<label>🔋 신경계 배터리</label>
+<select id="nerveBattery">
+<option>미기록</option><option>매우 안정</option><option>안정</option><option>피로 누적</option><option>붕괴 직전</option><option>완전 방전</option>
+</select>
+<div class="helper">오늘 전체 신경계 에너지 상태를 부모 체감 기준으로 기록합니다.</div>
+
+<label>😭 졸림 저항</label>
+<select id="sleepResistance">
+<option>미기록</option><option>없음</option><option>약함</option><option>중간</option><option>강함</option><option>오열/얼굴때림 동반</option>
+</select>
+<div class="helper">하루에 여러 번 있었으면 가장 강했던 수준을 선택하고, 시간/횟수는 메모에 적어주세요.</div>
+
+<label>⏰ 기상 후 붕괴 시작 시점</label>
+<select id="meltdownStart">
+<option>미기록</option><option>없음</option><option>기상 후 30분 이내</option><option>기상 후 1시간</option><option>기상 후 2시간</option><option>오전 늦게</option><option>오후</option><option>저녁</option><option>이동 후</option><option>잠들기 전</option>
+</select>
+
+<label>💩 장 상태</label>
+<div class="checkGrid">
+<label class="checkItem"><input type="checkbox" id="gut_normal">정상</label>
+<label class="checkItem"><input type="checkbox" id="gut_loose">묽은변</label>
+<label class="checkItem"><input type="checkbox" id="gut_diarrhea">설사</label>
+<label class="checkItem"><input type="checkbox" id="gut_constipation">변비</label>
+<label class="checkItem"><input type="checkbox" id="gut_pain">배아픔 표현</label>
+<label class="checkItem"><input type="checkbox" id="gut_appetite">식욕저하</label>
+</div>
+
+<label>🌡️ 컨디션</label>
+<div class="checkGrid">
+<label class="checkItem"><input type="checkbox" id="cond_stable">안정적임</label>
+<label class="checkItem"><input type="checkbox" id="cond_sensitive">예민함</label>
+<label class="checkItem"><input type="checkbox" id="cond_anxiety">피로함</label>
+<label class="checkItem"><input type="checkbox" id="cond_transition">전환 어려움</label>
+<label class="checkItem"><input type="checkbox" id="cond_waiting">기다림 어려움</label>
+<label class="checkItem"><input type="checkbox" id="cond_crying">울음</label>
+<label class="checkItem"><input type="checkbox" id="cond_sleepy">졸림</label>
+<label class="checkItem"><input type="checkbox" id="cond_stim">상동행동</label>
+</div>
+
+<label>💊 복용 약/영양제</label>
+<div class="sectionTitle">처방약 / 수면 관련</div>
+<div class="checkGrid">
+<label class="checkItem"><input type="checkbox" id="med_risperidone">리스페리돈</label>
+<label class="checkItem"><input type="checkbox" id="med_melatonin">멜라토닌</label>
+<label class="checkItem"><input type="checkbox" id="med_sleep">수면약</label>
+<label class="checkItem"><input type="checkbox" id="med_otherdrug">기타약</label>
+</div>
+
+<div class="sectionTitle">영양제 / 보충제</div>
+<div class="checkGrid">
+<label class="checkItem"><input type="checkbox" id="med_b2">B2</label>
+<label class="checkItem"><input type="checkbox" id="med_vitc">비타민C</label>
+<label class="checkItem"><input type="checkbox" id="med_vitd">비타민D</label>
+<label class="checkItem"><input type="checkbox" id="med_probiotics">유산균</label>
+<label class="checkItem"><input type="checkbox" id="med_omega3">오메가3</label>
+<label class="checkItem"><input type="checkbox" id="med_othersupp">기타영양제</label>
+</div>
+
+<label>🌱 오늘의 성장 신호</label>
+<div class="growthBox">
+<textarea id="growthMemo" rows="2" placeholder="예: 젖은 옷을 참고 이동함 / 배 아프다고 정확히 표현함"></textarea>
+</div>
+
+<label>📝 해당 날짜 메모</label>
+<textarea id="memo" rows="4" placeholder="힘들었던 흐름, 졸림 저항 횟수/시간, 회복 방법 등을 자유롭게 기록"></textarea>
+
+<button onclick="saveSelectedDate()">선택한 날짜 기록 저장/수정</button>
+<button class="green" onclick="resetForNewDate()">입력칸 비우기</button>
+<div id="saved" class="notice" style="display:none"></div>
+</div>
+
+<div class="card">
+<h2>저장된 기록</h2>
+<div class="actions">
+<button onclick="downloadCSV()">엑셀용 CSV 저장</button>
+<button class="danger" onclick="clearAll()">전체 삭제</button>
+</div>
+<div id="records"></div>
+</div>
+</div>
+
+<script>
+function todayKey(){return new Date().toISOString().slice(0,10)}
+function nowText(){return new Date().toLocaleString("ko-KR")}
+function getRecords(){return JSON.parse(localStorage.getItem("siel_daily_records_v7")||"[]")}
+function setRecords(records){localStorage.setItem("siel_daily_records_v7",JSON.stringify(records))}
+
+const medMap=[
+["med_risperidone","리스페리돈"],["med_melatonin","멜라토닌"],["med_sleep","수면약"],["med_otherdrug","기타약"],
+["med_b2","B2"],["med_vitc","비타민C"],["med_vitd","비타민D"],["med_probiotics","유산균"],["med_omega3","오메가3"],["med_othersupp","기타영양제"]
+];
+
+const conditionMap=[
+["cond_stable","안정적임"],
+["cond_sensitive","예민함"],["cond_anxiety","피로함"],["cond_transition","전환 어려움"],["cond_waiting","기다림 어려움"],["cond_crying","울음"],["cond_sleepy","졸림"],["cond_stim","상동행동"]
+];
+
+const gutMap=[
+["gut_normal","정상"],["gut_loose","묽은변"],["gut_diarrhea","설사"],["gut_constipation","변비"],["gut_pain","배아픔 표현"],["gut_appetite","식욕저하"]
+];
+
+function getCheckedList(map){
+  let list=[];
+  map.forEach(([id,name])=>{if(document.getElementById(id).checked)list.push(name)});
+  return list;
+}
+function setChecks(map,selected){
+  selected=selected||[];
+  map.forEach(([id,name])=>{document.getElementById(id).checked=selected.includes(name)});
+}
+function defaultForm(){
+  document.getElementById("sleep").value="보통";
+  document.getElementById("sleepHours").value="";
+  document.getElementById("sleepMinutes").value="";
+  document.getElementById("aggression").value="0 없음";
+  document.getElementById("selfharm").value="없음";
+  document.getElementById("nerveBattery").value="미기록";
+  document.getElementById("sleepResistance").value="미기록";
+  document.getElementById("meltdownStart").value="미기록";
+  document.getElementById("growthMemo").value="";
+  document.getElementById("memo").value="";
+  setChecks(medMap,[]);
+  setChecks(conditionMap,[]);
+  setChecks(gutMap,[]);
+}
+function fillForm(r){
+  document.getElementById("sleep").value=r.sleep||"보통";
+  document.getElementById("sleepHours").value=r.sleepHours||"";
+  document.getElementById("sleepMinutes").value=r.sleepMinutes||"";
+  document.getElementById("aggression").value=r.aggression||"0 없음";
+  document.getElementById("selfharm").value=r.selfharm||"없음";
+  document.getElementById("nerveBattery").value=r.nerveBattery||"미기록";
+  document.getElementById("sleepResistance").value=r.sleepResistance||"미기록";
+  document.getElementById("meltdownStart").value=r.meltdownStart||"미기록";
+  document.getElementById("growthMemo").value=r.growthMemo||"";
+  document.getElementById("memo").value=r.memo||"";
+  setChecks(medMap,r.medicine||[]);
+  setChecks(conditionMap,r.condition||[]);
+  setChecks(gutMap,r.gut||[]);
+}
+function loadSelectedDate(){
+  const key=document.getElementById("recordDate").value;
+  const found=getRecords().find(r=>r.key===key);
+  const el=document.getElementById("dateInfo");
+  document.getElementById("saved").style.display="none";
+  if(found){fillForm(found);el.innerHTML="<b>"+key+" 기록 있음</b><br>내용 수정 후 저장 가능합니다."}
+  else{defaultForm();el.innerHTML="<b>"+key+" 기록 없음</b>"}
+}
+function sleepTotalText(){
+  const h=document.getElementById("sleepHours").value;
+  const m=document.getElementById("sleepMinutes").value;
+  if(!h&&!m)return "";
+  return `${h||0}시간 ${m||0}분`;
+}
+function saveSelectedDate(){
+  const key=document.getElementById("recordDate").value;
+  if(!key){alert("날짜 선택");return}
+  let records=getRecords();
+  const existingIndex=records.findIndex(r=>r.key===key);
+  const old=existingIndex>=0 ? records[existingIndex] : {};
+  const data={
+    ...old,
+    key:key,date:key,lastUpdated:nowText(),
+    sleep:document.getElementById("sleep").value,
+    sleepHours:document.getElementById("sleepHours").value,
+    sleepMinutes:document.getElementById("sleepMinutes").value,
+    sleepTotal:sleepTotalText(),
+    aggression:document.getElementById("aggression").value,
+    selfharm:document.getElementById("selfharm").value,
+    nerveBattery:document.getElementById("nerveBattery").value,
+    sleepResistance:document.getElementById("sleepResistance").value,
+    meltdownStart:document.getElementById("meltdownStart").value,
+    gut:getCheckedList(gutMap),
+    condition:getCheckedList(conditionMap),
+    medicine:getCheckedList(medMap),
+    growthMemo:document.getElementById("growthMemo").value,
+    memo:document.getElementById("memo").value
+  };
+  if(existingIndex>=0)records[existingIndex]=data; else records.unshift(data);
+  records.sort((a,b)=>b.key.localeCompare(a.key));
+  setRecords(records);
+  document.getElementById("saved").style.display="block";
+  document.getElementById("saved").innerText="저장 완료";
+  loadRecords();
+}
+function loadRecords(){
+  const records=getRecords();
+  if(records.length===0){document.getElementById("records").innerHTML="기록 없음";return}
+  document.getElementById("records").innerHTML=records.map(r=>`
+    <div class="record" onclick="editRecord('${r.key}')">
+      <div class="recordDate">📅 ${r.date}</div>
+      ${r.growthMemo ? `<div class="growthRecord">🌱 오늘의 성장 신호: ${escapeHtml(r.growthMemo)}</div>` : ""}
+      😴 ${r.sleep||"-"} / 🌙 ${r.sleepTotal||"-"}<br>
+      🔋 ${r.nerveBattery||"미기록"} / 😭 ${r.sleepResistance||"미기록"}<br>
+      ⏰ ${r.meltdownStart||"미기록"} / 💩 ${(r.gut||[]).join(", ")||"-"}<br>
+      😡 ${r.aggression||"-"} / 😣 ${r.selfharm||"-"}<br>
+      🌡️ ${(r.condition||[]).join(", ")||"-"}<br>
+      💊 ${(r.medicine||[]).join(", ")||"-"}<br>
+      📝 ${escapeHtml(r.memo||"-")}
+    </div>
+  `).join("");
+}
+function escapeHtml(text){
+  return String(text).replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;").replaceAll("'","&#039;");
+}
+function editRecord(key){
+  document.getElementById("recordDate").value=key;
+  loadSelectedDate();
+  window.scrollTo({top:0,behavior:"smooth"});
+}
+function resetForNewDate(){
+  defaultForm();
+  document.getElementById("saved").style.display="none";
+}
+function downloadCSV(){
+  const records=getRecords();
+  if(records.length===0){alert("기록 없음");return}
+  const header=["날짜","수면","총수면","신경계 배터리","졸림 저항","기상 후 붕괴 시작 시점","장 상태","공격성","자해","컨디션","복용약/영양제","오늘의 성장 신호","메모"];
+  const rows=records.map(r=>[r.date,r.sleep,r.sleepTotal,r.nerveBattery,r.sleepResistance,r.meltdownStart,(r.gut||[]).join(", "),r.aggression,r.selfharm,(r.condition||[]).join(", "),(r.medicine||[]).join(", "),r.growthMemo,r.memo]);
+  const csv=[header,...rows].map(row=>row.map(v=>`"${String(v||"").replaceAll('"','""')}"`).join(",")).join("\n");
+  const blob=new Blob(["\ufeff"+csv],{type:"text/csv;charset=utf-8;"});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement("a");
+  a.href=url;a.download="siel_daily_records.csv";a.click();
+  URL.revokeObjectURL(url);
+}
+function clearAll(){
+  if(confirm("전체 삭제할까요?")){
+    localStorage.removeItem("siel_daily_records_v7");
+    defaultForm();
+    loadRecords();
+  }
+}
+document.getElementById("recordDate").value=todayKey();
+loadSelectedDate();
+loadRecords();
+</script>
+</body>
+</html>
