@@ -14,7 +14,6 @@ label{display:block;margin-top:12px;font-weight:700;font-size:16px}
 select,textarea,button,input{width:100%;box-sizing:border-box;padding:12px;border-radius:12px;border:1px solid #ddd;margin-top:6px;font-size:16px;background:white}
 button{background:#5b8def;color:white;border:none;font-weight:800;margin-top:16px}
 button:active{transform:scale(.98)}
-.small{font-size:13px;color:#666;line-height:1.5}
 .notice{font-size:14px;color:#2450a4;background:#eef4ff;border-radius:12px;padding:10px;margin-top:10px}
 .record{border-bottom:1px solid #e6e6e6;padding:12px 4px;font-size:14px;line-height:1.6;cursor:pointer;border-radius:12px}
 .record:active{background:#eef4ff}
@@ -28,20 +27,17 @@ button:active{transform:scale(.98)}
 .checkItem{background:#f5f7fb;border-radius:12px;padding:10px;display:flex;align-items:center;gap:8px;font-size:15px}
 .checkItem input{width:auto;margin:0}
 .sectionTitle{margin-top:16px;font-size:15px;font-weight:800;color:#2450a4}
-.growthBox{background:#ffe680;border:2px solid #f2c94c;border-radius:14px;padding:12px}
+.helper{font-size:12px;color:#666;margin-top:5px;line-height:1.4}
 .growthBox{background:#ffe28a;border:1px solid #f2c94c;border-radius:16px;padding:12px;margin-top:8px}
 .growthBox textarea{background:#fff8dc;border:1px solid #e6c44f;margin-top:6px}
 .growthRecord{background:#fff1a8;border-radius:12px;padding:9px 10px;margin:8px 0;font-weight:700;color:#5c4300}
-.helper{font-size:12px;color:#666;margin-top:5px;line-height:1.4}
 </style>
 <meta name="description" content="시엘 수면 및 컨디션 기록">
 <meta property="og:title" content="시엘 수면 및 컨디션">
 <meta property="og:description" content="수면, 컨디션, 공격성, 자해, 복용 기록을 간단히 체크하는 기록표">
-
 <link rel="icon" type="image/png" href="icon.png">
 <link rel="apple-touch-icon" href="icon.png">
 <meta name="theme-color" content="#f5f7fb">
-
 </head>
 <body>
 <div class="container">
@@ -105,51 +101,6 @@ button:active{transform:scale(.98)}
 <label class="checkItem"><input type="checkbox" id="gut_constipation">변비</label>
 <label class="checkItem"><input type="checkbox" id="gut_pain">배아픔 표현</label>
 <label class="checkItem"><input type="checkbox" id="gut_appetite">식욕저하</label>
-</div>
-
-
-<label>🔋 신경계 배터리</label>
-<select id="battery">
-<option>매우 안정</option>
-<option>안정</option>
-<option>피로 누적</option>
-<option>붕괴 직전</option>
-<option>완전 방전</option>
-</select>
-
-<label>😭 졸림 저항</label>
-<select id="sleepResistance">
-<option>없음</option>
-<option>약함</option>
-<option>중간</option>
-<option>강함</option>
-<option>오열/얼굴때림 동반</option>
-</select>
-
-<label>⏰ 기상 후 붕괴 시작 시점</label>
-<select id="meltdownTime">
-<option>없음</option>
-<option>기상 후 30분</option>
-<option>기상 후 1시간</option>
-<option>기상 후 2시간</option>
-<option>오전 늦게</option>
-<option>오후</option>
-<option>저녁</option>
-<option>이동 후</option>
-</select>
-
-<label>💩 장 상태</label>
-<div class="checkGrid">
-<label class="checkItem"><input type="checkbox" id="gut_normal">정상</label>
-<label class="checkItem"><input type="checkbox" id="gut_loose">묽은변</label>
-<label class="checkItem"><input type="checkbox" id="gut_diarrhea">설사</label>
-<label class="checkItem"><input type="checkbox" id="gut_constipation">변비</label>
-<label class="checkItem"><input type="checkbox" id="gut_pain">배아픔 표현</label>
-</div>
-
-<label>🌱 오늘의 성장 신호</label>
-<div class="growthBox">
-<textarea id="growthMemo" rows="2" placeholder="시엘이의 긍정적인 성장과 표현을 짧게 기록해주세요"></textarea>
 </div>
 
 <label>🌡️ 컨디션</label>
@@ -218,8 +169,8 @@ const medMap=[
 ];
 
 const conditionMap=[
-["cond_stable","안정적임"],
-["cond_sensitive","예민함"],["cond_anxiety","피로함"],["cond_transition","전환 어려움"],["cond_waiting","기다림 어려움"],["cond_crying","울음"],["cond_sleepy","졸림"],["cond_stim","상동행동"]
+["cond_stable","안정적임"],["cond_sensitive","예민함"],["cond_anxiety","피로함"],["cond_transition","전환 어려움"],
+["cond_waiting","기다림 어려움"],["cond_crying","울음"],["cond_sleepy","졸림"],["cond_stim","상동행동"]
 ];
 
 const gutMap=[
@@ -227,13 +178,16 @@ const gutMap=[
 ];
 
 function getCheckedList(map){
-  let list=[];
-  map.forEach(([id,name])=>{if(document.getElementById(id).checked)list.push(name)});
+  const list=[];
+  map.forEach(([id,name])=>{const el=document.getElementById(id); if(el && el.checked) list.push(name)});
   return list;
 }
 function setChecks(map,selected){
   selected=selected||[];
-  map.forEach(([id,name])=>{document.getElementById(id).checked=selected.includes(name)});
+  map.forEach(([id,name])=>{const el=document.getElementById(id); if(el) el.checked=selected.includes(name)});
+}
+function valueOrFallback(record, primary, fallback, emptyValue){
+  return record[primary] || record[fallback] || emptyValue;
 }
 function defaultForm(){
   document.getElementById("sleep").value="보통";
@@ -256,16 +210,11 @@ function fillForm(r){
   document.getElementById("sleepMinutes").value=r.sleepMinutes||"";
   document.getElementById("aggression").value=r.aggression||"0 없음";
   document.getElementById("selfharm").value=r.selfharm||"없음";
-  document.getElementById("nerveBattery").value=r.nerveBattery||"미기록";
+  document.getElementById("nerveBattery").value=valueOrFallback(r,"nerveBattery","battery","미기록");
   document.getElementById("sleepResistance").value=r.sleepResistance||"미기록";
-  document.getElementById("meltdownStart").value=r.meltdownStart||"미기록";
+  document.getElementById("meltdownStart").value=valueOrFallback(r,"meltdownStart","meltdownTime","미기록");
   document.getElementById("growthMemo").value=r.growthMemo||"";
   document.getElementById("memo").value=r.memo||"";
-  document.getElementById("battery").value=r.battery||"안정";
-  document.getElementById("sleepResistance").value=r.sleepResistance||"없음";
-  document.getElementById("meltdownTime").value=r.meltdownTime||"없음";
-  document.getElementById("growthMemo").value=r.growthMemo||"";
-  setChecks(gutMap,r.gut||[]);
   setChecks(medMap,r.medicine||[]);
   setChecks(conditionMap,r.condition||[]);
   setChecks(gutMap,r.gut||[]);
@@ -287,7 +236,7 @@ function sleepTotalText(){
 function saveSelectedDate(){
   const key=document.getElementById("recordDate").value;
   if(!key){alert("날짜 선택");return}
-  let records=getRecords();
+  const records=getRecords();
   const existingIndex=records.findIndex(r=>r.key===key);
   const old=existingIndex>=0 ? records[existingIndex] : {};
   const data={
@@ -299,11 +248,6 @@ function saveSelectedDate(){
     sleepTotal:sleepTotalText(),
     aggression:document.getElementById("aggression").value,
     selfharm:document.getElementById("selfharm").value,
-    battery:document.getElementById("battery").value,
-    sleepResistance:document.getElementById("sleepResistance").value,
-    meltdownTime:document.getElementById("meltdownTime").value,
-    gut:getCheckedList(gutMap),
-    growthMemo:document.getElementById("growthMemo").value,
     nerveBattery:document.getElementById("nerveBattery").value,
     sleepResistance:document.getElementById("sleepResistance").value,
     meltdownStart:document.getElementById("meltdownStart").value,
@@ -313,6 +257,8 @@ function saveSelectedDate(){
     growthMemo:document.getElementById("growthMemo").value,
     memo:document.getElementById("memo").value
   };
+  delete data.battery;
+  delete data.meltdownTime;
   if(existingIndex>=0)records[existingIndex]=data; else records.unshift(data);
   records.sort((a,b)=>b.key.localeCompare(a.key));
   setRecords(records);
@@ -323,19 +269,22 @@ function saveSelectedDate(){
 function loadRecords(){
   const records=getRecords();
   if(records.length===0){document.getElementById("records").innerHTML="기록 없음";return}
-  document.getElementById("records").innerHTML=records.map(r=>`
+  document.getElementById("records").innerHTML=records.map(r=>{
+    const battery=valueOrFallback(r,"nerveBattery","battery","미기록");
+    const meltdown=valueOrFallback(r,"meltdownStart","meltdownTime","미기록");
+    return `
     <div class="record" onclick="editRecord('${r.key}')">
-      <div class="recordDate">📅 ${r.date}</div>
+      <div class="recordDate">📅 ${escapeHtml(r.date||r.key)}</div>
       ${r.growthMemo ? `<div class="growthRecord">🌱 오늘의 성장 신호: ${escapeHtml(r.growthMemo)}</div>` : ""}
-      😴 ${r.sleep||"-"} / 🌙 ${r.sleepTotal||"-"}<br>
-      🔋 ${r.nerveBattery||"미기록"} / 😭 ${r.sleepResistance||"미기록"}<br>
-      ⏰ ${r.meltdownStart||"미기록"} / 💩 ${(r.gut||[]).join(", ")||"-"}<br>
-      😡 ${r.aggression||"-"} / 😣 ${r.selfharm||"-"}<br>
-      🌡️ ${(r.condition||[]).join(", ")||"-"}<br>
-      💊 ${(r.medicine||[]).join(", ")||"-"}<br>
+      😴 ${escapeHtml(r.sleep||"-")} / 🌙 ${escapeHtml(r.sleepTotal||"-")}<br>
+      🔋 ${escapeHtml(battery)} / 😭 ${escapeHtml(r.sleepResistance||"미기록")}<br>
+      ⏰ ${escapeHtml(meltdown)} / 💩 ${escapeHtml((r.gut||[]).join(", ")||"-")}<br>
+      😡 ${escapeHtml(r.aggression||"-")} / 😣 ${escapeHtml(r.selfharm||"-")}<br>
+      🌡️ ${escapeHtml((r.condition||[]).join(", ")||"-")}<br>
+      💊 ${escapeHtml((r.medicine||[]).join(", ")||"-")}<br>
       📝 ${escapeHtml(r.memo||"-")}
-    </div>
-  `).join("");
+    </div>`;
+  }).join("");
 }
 function escapeHtml(text){
   return String(text).replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;").replaceAll("'","&#039;");
@@ -353,7 +302,10 @@ function downloadCSV(){
   const records=getRecords();
   if(records.length===0){alert("기록 없음");return}
   const header=["날짜","수면","총수면","신경계 배터리","졸림 저항","기상 후 붕괴 시작 시점","장 상태","공격성","자해","컨디션","복용약/영양제","오늘의 성장 신호","메모"];
-  const rows=records.map(r=>[r.date,r.sleep,r.sleepTotal,r.nerveBattery,r.sleepResistance,r.meltdownStart,(r.gut||[]).join(", "),r.aggression,r.selfharm,(r.condition||[]).join(", "),(r.medicine||[]).join(", "),r.growthMemo,r.memo]);
+  const rows=records.map(r=>[
+    r.date,r.sleep,r.sleepTotal,valueOrFallback(r,"nerveBattery","battery",""),r.sleepResistance,valueOrFallback(r,"meltdownStart","meltdownTime",""),(r.gut||[]).join(", "),
+    r.aggression,r.selfharm,(r.condition||[]).join(", "),(r.medicine||[]).join(", "),r.growthMemo,r.memo
+  ]);
   const csv=[header,...rows].map(row=>row.map(v=>`"${String(v||"").replaceAll('"','""')}"`).join(",")).join("\n");
   const blob=new Blob(["\ufeff"+csv],{type:"text/csv;charset=utf-8;"});
   const url=URL.createObjectURL(blob);
