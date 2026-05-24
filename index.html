@@ -45,7 +45,7 @@ button:active{transform:scale(.98)}
 textarea#memo{height:190px;min-height:190px;max-height:190px;overflow-y:scroll;resize:vertical;line-height:1.6;-webkit-overflow-scrolling:touch;}
 
 .growthMemoBox{
-background:#D0F0F8;
+background:#DEF5FA;
 border:1px solid #e0b84f;
 border-radius:12px;
 padding:8px;
@@ -136,7 +136,7 @@ margin-top:0
 
 
 <button onclick="saveSelectedDate()">선택한 날짜 기록 저장/수정</button>
-<button class="green" onclick="resetForNewDate()">입력칸 비우기</button>
+
 <div id="saved" class="notice" style="display:none"></div>
 </div>
 
@@ -390,7 +390,7 @@ window.loadRecords = async function(){
       <b>🌿 컨디션:</b> ${(r.condition||[]).join(", ")||"-"}<br>
       <b>💊 복용약:</b> ${(r.medicine||[]).join(", ")||"-"}<br>
       <div class="recordMemo">${r.memo||"-"}</div>
-      ${r.growthMemo ? `<div style="background:#D0F0F8;border-radius:10px;padding:6px 8px;margin-top:6px;font-weight:700">🌳 성장 메모: ${r.growthMemo}</div>` : ""}
+      ${r.growthMemo ? `<div style="background:#DEF5FA;border-radius:10px;padding:6px 8px;margin-top:6px;font-weight:700">🌳 성장 메모: ${r.growthMemo}</div>` : ""}
     </div>`;
   }).join("");
 
