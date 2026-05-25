@@ -84,6 +84,7 @@ textarea#memo{background:#ffffff;border:1px solid #ddd;height:190px;min-height:1
 .memoToolbar .underlineBtn{text-decoration:underline}
 .memoToolbar .redBtn{color:#d90000}
 .memoToolbar .blackBtn{color:#222}
+.memoToolbar .grayBtn{color:#ABA7A8}
 .memoEditor{
   width:100%;
   box-sizing:border-box;
@@ -191,6 +192,7 @@ textarea#memo{background:#ffffff;border:1px solid #ddd;height:190px;min-height:1
   <button type="button" class="miniBtn underlineBtn" onclick="formatMemo('underline')">U</button>
   <button type="button" class="miniBtn redBtn" onclick="formatMemo('red')">빨강</button>
   <button type="button" class="miniBtn blackBtn" onclick="formatMemo('black')">검정</button>
+  <button type="button" class="miniBtn grayBtn" onclick="formatMemo('gray')">회색</button>
 </div>
 <div id="memo" class="memoEditor" contenteditable="true" aria-label="메모 입력란"></div>
 
@@ -328,6 +330,7 @@ window.formatMemo = function(type){
   if(type === "underline") document.execCommand("underline", false, null);
   if(type === "red") document.execCommand("foreColor", false, "#d90000");
   if(type === "black") document.execCommand("foreColor", false, "#222222");
+  if(type === "gray") document.execCommand("foreColor", false, "#ABA7A8");
 }
 
 function setChecks(map,selected){
