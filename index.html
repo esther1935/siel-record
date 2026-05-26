@@ -138,6 +138,68 @@ textarea#memo{background:#ffffff;border:1px solid #ddd;height:190px;min-height:1
 .chatDoctorContent.open{display:block;}
 </style>
 
+
+<style>
+.chatDoctorToolbar{
+  display:flex;
+  gap:6px;
+  margin-top:6px;
+  margin-bottom:4px;
+}
+.chatDoctorToolbar .miniBtn{
+  width:auto;
+  min-width:44px;
+  padding:7px 10px;
+  margin:0;
+  border-radius:10px;
+  border:1px solid #d6d6d6;
+  background:#f7f7f7;
+  color:#222;
+  font-size:14px;
+  font-weight:700;
+  box-shadow:none;
+}
+.chatDoctorToolbar .miniBtn:active{transform:scale(.98)}
+.chatDoctorToolbar .underlineBtn{text-decoration:underline}
+.chatDoctorToolbar .redBtn{color:#d90000}
+.chatDoctorToolbar .blackBtn{color:#222}
+.chatDoctorEditor{
+  width:100%;
+  box-sizing:border-box;
+  padding:12px;
+  border-radius:14px;
+  border:1px solid #ddd;
+  background:#ffffff;
+  color:#222;
+  font-size:16px;
+  line-height:1.6;
+  height:170px;
+  min-height:170px;
+  max-height:170px;
+  overflow-y:auto;
+  resize:vertical;
+  -webkit-overflow-scrolling:touch;
+  font-weight:normal;
+  outline:none;
+  white-space:pre-wrap;
+}
+.chatDoctorEditor:focus{
+  border-color:#b9c7e6;
+}
+.chatDoctorContent{
+  white-space:normal !important;
+  word-break:break-word !important;
+}
+.chatDoctorContent div{
+  margin:0 !important;
+  padding:0 !important;
+  line-height:1.6 !important;
+}
+.chatDoctorContent b,
+.chatDoctorContent strong{font-weight:700}
+.chatDoctorContent u{text-decoration:underline}
+</style>
+
 </head>
 <body>
 <div class="container">
@@ -223,7 +285,15 @@ textarea#memo{background:#ffffff;border:1px solid #ddd;height:190px;min-height:1
 
 <div class="chatDoctorBox">
   <label><b>💬 CHAT DOCTOR</b></label>
-  <textarea id="chatDoctorMemo" placeholder="하루 흐름을 ChatGPT와 나누며 정리한 해석, 놓친 부분, 다음 양육 방향을 기록해 주세요."></textarea>
+  
+<div class="chatDoctorToolbar" aria-label="CHAT DOCTOR 간단 편집 도구">
+  <button type="button" class="miniBtn" onclick="formatChatDoctor('bold')">B</button>
+  <button type="button" class="miniBtn underlineBtn" onclick="formatChatDoctor('underline')">U</button>
+  <button type="button" class="miniBtn redBtn" onclick="formatChatDoctor('red')">빨강</button>
+  <button type="button" class="miniBtn blackBtn" onclick="formatChatDoctor('black')">검정</button>
+</div>
+<div id="chatDoctorMemo" class="chatDoctorEditor" contenteditable="true" aria-label="CHAT DOCTOR 입력란"></div>
+
 </div>
 
 </div>
@@ -333,6 +403,32 @@ function getCheckedList(map){
 }
 
 
+
+function setChatDoctorContent(value){
+  const el = document.getElementById("chatDoctorMemo");
+  if(!el) return;
+  el.innerHTML = value || "";
+}
+
+function getChatDoctorContent(){
+  const el = document.getElementById("chatDoctorMemo");
+  if(!el) return "";
+  return el.innerHTML.trim();
+}
+
+function focusChatDoctor(){
+  const el = document.getElementById("chatDoctorMemo");
+  if(el) el.focus();
+}
+
+window.formatChatDoctor = function(type){
+  focusChatDoctor();
+  if(type === "bold") document.execCommand("bold", false, null);
+  if(type === "underline") document.execCommand("underline", false, null);
+  if(type === "red") document.execCommand("foreColor", false, "#d90000");
+  if(type === "black") document.execCommand("foreColor", false, "#222222");
+}
+
 function setMemoContent(value){
   const memo = document.getElementById("memo");
   if(!memo) return;
@@ -372,7 +468,7 @@ function defaultForm(){
   document.getElementById("selfharm").value="없음";
   setMemoContent("");
 document.getElementById("growthMemo").value="";
-  const cdm0=document.getElementById("chatDoctorMemo"); if(cdm0) cdm0.value="";
+  const cdm0=document.getElementById("chatDoctorMemo"); if(cdm0) setChatDoctorContent("");
   setTimeout(autoResizeMemo, 0);
   setChecks(medMap,[]);
   setChecks(conditionMap,[]);
@@ -386,7 +482,7 @@ function fillForm(r){
   document.getElementById("selfharm").value=r.selfharm||"없음";
   setMemoContent(r.memo||"");
 document.getElementById("growthMemo").value=r.growthMemo||"";
-  const cdm=document.getElementById("chatDoctorMemo"); if(cdm) cdm.value=r.chatDoctorMemo||"";
+  const cdm=document.getElementById("chatDoctorMemo"); if(cdm) setChatDoctorContent(r.chatDoctorMemo||"");
   setTimeout(autoResizeMemo, 0);
   setChecks(medMap,r.medicine||[]);
   setChecks(conditionMap,r.condition||[]);
@@ -447,7 +543,7 @@ window.saveSelectedDate = async function(){
     medicine:getCheckedList(medMap),
     memo:getMemoContent(),
     growthMemo:document.getElementById("growthMemo").value,
-    chatDoctorMemo:(document.getElementById("chatDoctorMemo") ? document.getElementById("chatDoctorMemo").value : "")
+    chatDoctorMemo:getChatDoctorContent()
   };
 
   if(existingIndex>=0) records[existingIndex]=data;
@@ -468,6 +564,56 @@ window.saveSelectedDate = async function(){
 
 
 
+
+
+function sanitizeSimpleEditorHtml(html){
+  const box = document.createElement("div");
+  box.innerHTML = String(html || "");
+
+  const allowedTags = new Set(["B","STRONG","U","BR","DIV","SPAN","FONT"]);
+
+  function normalizeColor(value){
+    value = String(value || "").trim().toLowerCase().replace(/\s+/g, "");
+    if(value === "#d90000" || value === "red" || value === "rgb(217,0,0)") return "#d90000";
+    if(value === "#222222" || value === "#222" || value === "black" || value === "rgb(34,34,34)") return "#222222";
+    return "";
+  }
+
+  function cleanNode(node){
+    [...node.children].forEach(child => cleanNode(child));
+    if(node.nodeType !== 1) return;
+
+    if(!allowedTags.has(node.tagName)){
+      const span = document.createElement("span");
+      span.textContent = node.textContent || "";
+      node.replaceWith(span);
+      return;
+    }
+
+    let color = "";
+    if(node.tagName === "FONT"){
+      color = normalizeColor(node.getAttribute("color"));
+    }
+
+    const style = node.getAttribute("style") || "";
+    const colorMatch = style.match(/color\s*:\s*([^;]+)/i);
+    if(colorMatch){
+      color = normalizeColor(colorMatch[1]);
+    }
+
+    const hasUnderline = /text-decoration[^;]*underline/i.test(style);
+    const hasBold = /font-weight\s*:\s*(bold|700|800|900)/i.test(style);
+
+    [...node.attributes].forEach(attr => node.removeAttribute(attr.name));
+
+    if(color) node.style.color = color;
+    if(hasUnderline) node.style.textDecoration = "underline";
+    if(hasBold) node.style.fontWeight = "700";
+  }
+
+  cleanNode(box);
+  return box.innerHTML;
+}
 
 function escapeHtml(text){
   return String(text || "")
@@ -524,7 +670,7 @@ window.loadRecords = async function(){
       <b>💊 복용약:</b> ${(r.medicine||[]).join(", ")||"-"}<br>
       <div class="recordMemo">${r.memo||"-"}</div>
       ${r.growthMemo ? `<div style="background:#D0F0F8;border-radius:10px;padding:6px 8px;margin-top:6px;font-weight:700">🌳 성장 메모: ${r.growthMemo}</div>` : ""}
-      ${r.chatDoctorMemo ? `<button type="button" class="chatDoctorToggle" onclick="event.stopPropagation(); toggleChatDoctor(this);">💬 CHAT DOCTOR 보기</button><div class="chatDoctorContent">${escapeHtml(r.chatDoctorMemo)}</div>` : ""}
+      ${r.chatDoctorMemo ? `<button type="button" class="chatDoctorToggle" onclick="event.stopPropagation(); toggleChatDoctor(this);">💬 CHAT DOCTOR 보기</button><div class="chatDoctorContent">${sanitizeSimpleEditorHtml(r.chatDoctorMemo)}</div>` : ""}
     </div>`;
   }).join("");
 
