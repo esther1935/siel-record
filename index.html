@@ -118,6 +118,26 @@ textarea#memo{background:#ffffff;border:1px solid #ddd;height:190px;min-height:1
 .recordMemo u{text-decoration:underline}
 </style>
 
+
+<style>
+.chatDoctorBox{margin-top:14px;}
+.chatDoctorBox label{display:block;margin-bottom:6px;}
+#chatDoctorMemo{
+  width:100%;box-sizing:border-box;padding:12px;border-radius:14px;border:1px solid #ddd;
+  background:#ffffff;color:#222;font-size:16px;line-height:1.6;height:170px;min-height:170px;
+  max-height:170px;overflow-y:auto;resize:vertical;-webkit-overflow-scrolling:touch;font-weight:normal;
+}
+.chatDoctorToggle{
+  margin-top:12px;padding:8px 12px;border-radius:999px;border:1px solid #cfe3ff;
+  background:#eaf3ff;color:#2450a4;font-size:13px;font-weight:800;box-shadow:none;
+}
+.chatDoctorContent{
+  display:none;margin-top:10px;padding:14px 16px;border-radius:16px;background:#f3f8ff;
+  color:#333;line-height:1.65;white-space:pre-line;word-break:keep-all;font-size:15px;
+}
+.chatDoctorContent.open{display:block;}
+</style>
+
 </head>
 <body>
 <div class="container">
@@ -200,6 +220,12 @@ textarea#memo{background:#ffffff;border:1px solid #ddd;height:190px;min-height:1
 <label>🌳 성장 메모</label>
 <div class="growthMemoBox">
 <textarea id="growthMemo" rows="1" placeholder="오늘 시엘이의 작은 성장 한 줄"></textarea>
+
+<div class="chatDoctorBox">
+  <label><b>💬 CHAT DOCTOR</b></label>
+  <textarea id="chatDoctorMemo" placeholder="하루 흐름을 ChatGPT와 나누며 정리한 해석, 놓친 부분, 다음 양육 방향을 기록해 주세요."></textarea>
+</div>
+
 </div>
 
 
@@ -346,6 +372,7 @@ function defaultForm(){
   document.getElementById("selfharm").value="없음";
   setMemoContent("");
 document.getElementById("growthMemo").value="";
+  const cdm0=document.getElementById("chatDoctorMemo"); if(cdm0) cdm0.value="";
   setTimeout(autoResizeMemo, 0);
   setChecks(medMap,[]);
   setChecks(conditionMap,[]);
@@ -359,6 +386,7 @@ function fillForm(r){
   document.getElementById("selfharm").value=r.selfharm||"없음";
   setMemoContent(r.memo||"");
 document.getElementById("growthMemo").value=r.growthMemo||"";
+  const cdm=document.getElementById("chatDoctorMemo"); if(cdm) cdm.value=r.chatDoctorMemo||"";
   setTimeout(autoResizeMemo, 0);
   setChecks(medMap,r.medicine||[]);
   setChecks(conditionMap,r.condition||[]);
@@ -566,6 +594,16 @@ document.addEventListener("DOMContentLoaded", function(){
     }
   }
 });
+</script>
+
+
+<script>
+window.toggleChatDoctor = function(btn){
+  const box = btn.nextElementSibling;
+  if(!box) return;
+  box.classList.toggle("open");
+  btn.textContent = box.classList.contains("open") ? "💬 CHAT DOCTOR 닫기" : "💬 CHAT DOCTOR 보기";
+}
 </script>
 
 </body>
