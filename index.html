@@ -446,7 +446,8 @@ window.saveSelectedDate = async function(){
     condition:getCheckedList(conditionMap),
     medicine:getCheckedList(medMap),
     memo:getMemoContent(),
-growthMemo:document.getElementById("growthMemo").value
+    growthMemo:document.getElementById("growthMemo").value,
+    chatDoctorMemo:(document.getElementById("chatDoctorMemo") ? document.getElementById("chatDoctorMemo").value : "")
   };
 
   if(existingIndex>=0) records[existingIndex]=data;
@@ -466,6 +467,16 @@ growthMemo:document.getElementById("growthMemo").value
 }
 
 
+
+
+function escapeHtml(text){
+  return String(text || "")
+    .replaceAll("&","&amp;")
+    .replaceAll("<","&lt;")
+    .replaceAll(">","&gt;")
+    .replaceAll('"',"&quot;")
+    .replaceAll("'","&#039;");
+}
 
 function getKoreanWeekday(dateStr){
   const days = ["일","월","화","수","목","금","토"];
@@ -513,6 +524,7 @@ window.loadRecords = async function(){
       <b>💊 복용약:</b> ${(r.medicine||[]).join(", ")||"-"}<br>
       <div class="recordMemo">${r.memo||"-"}</div>
       ${r.growthMemo ? `<div style="background:#D0F0F8;border-radius:10px;padding:6px 8px;margin-top:6px;font-weight:700">🌳 성장 메모: ${r.growthMemo}</div>` : ""}
+      ${r.chatDoctorMemo ? `<button type="button" class="chatDoctorToggle" onclick="event.stopPropagation(); toggleChatDoctor(this);">💬 CHAT DOCTOR 보기</button><div class="chatDoctorContent">${escapeHtml(r.chatDoctorMemo)}</div>` : ""}
     </div>`;
   }).join("");
 
