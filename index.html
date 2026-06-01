@@ -688,10 +688,12 @@ function conditionDots(list){
 
 let recordDisplayCount = 10;
 
+let recordDisplayCount = 8;
+
 window.loadRecords = async function(resetCount=true){
   const records=await getRecords();
   const box=document.getElementById("records");
-  if(resetCount) recordDisplayCount = 10;
+  if(resetCount) recordDisplayCount = 8;
   if(records.length===0){box.innerHTML="기록 없음";return}
 
   records.sort((a,b)=>getRecordKey(b).localeCompare(getRecordKey(a)));
@@ -707,13 +709,13 @@ window.loadRecords = async function(resetCount=true){
       <b>🌿 컨디션:</b> ${(r.condition||[]).join(", ")||"-"}<br>
       <b>💊 복용약:</b> ${(r.medicine||[]).join(", ")||"-"}<br>
       <div class="recordMemo">${r.memo||"-"}</div>
-      ${r.growthMemo ? `<div style="background:#D0F0F8;border-radius:10px;padding:6px 8px;margin-top:6px;font-weight:700">🌳 성장 메모: ${String(r.growthMemo||"").replace(/\n/g,"<br>")}</div>` : ""}
+      ${r.growthMemo ? `<div style="background:#D0F0F8;border-radius:10px;padding:6px 8px;margin-top:6px;font-weight:700;white-space:pre-wrap;line-height:1.6">🌳 성장 메모: ${String(r.growthMemo||"").replace(/\n/g,"<br>")}</div>` : ""}
       ${r.chatDoctorMemo ? `<button type="button" class="chatDoctorToggle" onclick="event.stopPropagation(); toggleChatDoctor(this);">💬 CHAT DOCTOR 보기</button><div class="chatDoctorContent">${sanitizeSimpleEditorHtml(r.chatDoctorMemo)}</div>` : ""}
     </div>`;
   }).join("");
 
   if(records.length > recordDisplayCount){
-    box.innerHTML += `<button type="button" class="moreRecordsBtn" onclick="loadMoreRecords()">이전 기록 더보기</button>
+    box.innerHTML += `<button type="button" class="moreRecordsBtn" onclick="event.stopPropagation(); loadMoreRecords();">이전 기록 더보기</button>
     <div class="recordCountInfo">최근 ${recordDisplayCount}개 / 전체 ${records.length}개 기록 표시 중</div>`;
   }else{
     box.innerHTML += `<div class="recordCountInfo">전체 ${records.length}개 기록 표시 중</div>`;
@@ -724,6 +726,11 @@ window.loadRecords = async function(resetCount=true){
       window.editRecord(this.getAttribute("data-key"));
     });
   });
+}
+
+window.loadMoreRecords = function(){
+  recordDisplayCount += 8;
+  window.loadRecords(false);
 }
 
 window.loadMoreRecords = function(){
