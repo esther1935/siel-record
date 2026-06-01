@@ -821,5 +821,35 @@ window.toggleChatDoctor = function(btn){
 }
 </script>
 
-</body>
+<script>
+window.recordDisplayCount = 8;
+
+window.applyRecordPaging = function(){
+  const records = document.querySelectorAll('#records .record');
+  if(!records.length) return;
+
+  records.forEach((el, idx)=>{
+    el.style.display = idx < window.recordDisplayCount ? "" : "none";
+  });
+
+  let btn = document.getElementById("moreRecordsBtn");
+  if(!btn){
+    btn = document.createElement("button");
+    btn.id = "moreRecordsBtn";
+    btn.className = "moreRecordsBtn";
+    btn.textContent = "이전 기록 더보기";
+    btn.onclick = function(){
+      window.recordDisplayCount += 8;
+      window.applyRecordPaging();
+    };
+    document.getElementById("records").appendChild(btn);
+  }
+
+  btn.style.display = records.length > window.recordDisplayCount ? "" : "none";
+};
+
+setInterval(()=>{
+  try{ window.applyRecordPaging(); }catch(e){}
+},1000);
+</script></body>
 </html>
