@@ -201,27 +201,7 @@ textarea#memo{background:#ffffff;border:1px solid #ddd;height:190px;min-height:1
 </style>
 
 
-<style>
-.moreRecordsBtn{
-  display:block;
-  width:100%;
-  margin:14px 0 4px;
-  padding:12px 14px;
-  border-radius:14px;
-  border:1px solid #cfe3ff;
-  background:#eaf3ff;
-  color:#2450a4;
-  font-size:15px;
-  font-weight:800;
-  box-shadow:none;
-}
-.recordCountInfo{
-  text-align:center;
-  color:#777;
-  font-size:13px;
-  margin-top:8px;
-}
-</style>
+
 
 
 <style>
@@ -233,6 +213,55 @@ textarea#memo{background:#ffffff;border:1px solid #ddd;height:190px;min-height:1
   line-height:1.6 !important;
 }
 </style>
+
+<style>
+.recordPager{
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  gap:10px;
+  margin:18px 0 6px;
+  padding:4px 0;
+  font-size:18px;
+  color:#111;
+}
+.recordPager button{
+  width:auto;
+  min-width:32px;
+  padding:4px 6px;
+  border:none;
+  background:transparent;
+  color:#aaa;
+  font-size:28px;
+  font-weight:900;
+  box-shadow:none;
+}
+.recordPager .pageNum{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  min-width:26px;
+  height:30px;
+  padding:0 2px;
+  border-radius:8px;
+  font-size:18px;
+  font-weight:500;
+  color:#111;
+  cursor:pointer;
+}
+.recordPager .pageNum.active{
+  color:#2450a4;
+  font-weight:900;
+  background:#eaf3ff;
+}
+.recordPagerInfo{
+  text-align:center;
+  color:#888;
+  font-size:12px;
+  margin:4px 0 8px;
+}
+</style>
+
 </head>
 
 <body>
@@ -815,29 +844,113 @@ window.toggleChatDoctor = function(btn){
 </script>
 
 
-<style>
-.moreRecordsBtn{display:block;width:100%;margin:12px 0;padding:10px;border-radius:12px;border:1px solid #cfe3ff;background:#eaf3ff;color:#2450a4;font-weight:700}
-</style>
 <script>
-window.recordDisplayCount=8;
-window.applyRecordPaging=function(){
- const box=document.getElementById('records');
- if(!box) return;
- const records=box.querySelectorAll('.record');
- if(records.length===0) return;
- records.forEach((el,i)=>{el.style.display=(i<window.recordDisplayCount)?'':'none';});
- let btn=document.getElementById('moreRecordsBtn');
- if(!btn){
-   btn=document.createElement('button');
-   btn.id='moreRecordsBtn';
-   btn.className='moreRecordsBtn';
-   btn.textContent='이전 기록 더보기';
-   btn.onclick=function(){window.recordDisplayCount+=8;window.applyRecordPaging();};
-   box.appendChild(btn);
- }
- btn.style.display=(records.length>window.recordDisplayCount)?'':'none';
-};
-setTimeout(()=>{try{applyRecordPaging();}catch(e){}},2000);
+(function(){
+  const PAGE_SIZE = 8;
+  let currentPage = 1;
+  let applying = false;
+
+  function getRecordBox(){
+    return document.getElementById("records");
+  }
+
+  function removeOldPager(box){
+    box.querySelectorAll(".recordPager,.recordPagerInfo").forEach(el => el.remove());
+  }
+
+  window.applyRecordNumberPaging = function(){
+    if(applying) return;
+    const box = getRecordBox();
+    if(!box) return;
+
+    const records = Array.from(box.querySelectorAll(":scope > .record"));
+    if(records.length === 0) return;
+
+    applying = true;
+    removeOldPager(box);
+
+    const totalPages = Math.max(1, Math.ceil(records.length / PAGE_SIZE));
+    if(currentPage > totalPages) currentPage = totalPages;
+    if(currentPage < 1) currentPage = 1;
+
+    records.forEach((el, idx) => {
+      const page = Math.floor(idx / PAGE_SIZE) + 1;
+      el.style.display = (page === currentPage) ? "" : "none";
+    });
+
+    if(totalPages > 1){
+      const pager = document.createElement("div");
+      pager.className = "recordPager";
+
+      const prev = document.createElement("button");
+      prev.type = "button";
+      prev.textContent = "◀";
+      prev.onclick = function(e){
+        e.stopPropagation();
+        if(currentPage > 1){
+          currentPage--;
+          window.applyRecordNumberPaging();
+          box.scrollIntoView({behavior:"smooth", block:"start"});
+        }
+      };
+      pager.appendChild(prev);
+
+      for(let i=1; i<=totalPages; i++){
+        const num = document.createElement("span");
+        num.className = "pageNum" + (i === currentPage ? " active" : "");
+        num.textContent = i;
+        num.onclick = function(e){
+          e.stopPropagation();
+          currentPage = i;
+          window.applyRecordNumberPaging();
+          box.scrollIntoView({behavior:"smooth", block:"start"});
+        };
+        pager.appendChild(num);
+      }
+
+      const next = document.createElement("button");
+      next.type = "button";
+      next.textContent = "▶";
+      next.onclick = function(e){
+        e.stopPropagation();
+        if(currentPage < totalPages){
+          currentPage++;
+          window.applyRecordNumberPaging();
+          box.scrollIntoView({behavior:"smooth", block:"start"});
+        }
+      };
+      pager.appendChild(next);
+
+      const info = document.createElement("div");
+      info.className = "recordPagerInfo";
+      info.textContent = "페이지 " + currentPage + " / " + totalPages + " · 전체 " + records.length + "개 기록";
+
+      box.appendChild(pager);
+      box.appendChild(info);
+    }
+
+    applying = false;
+  };
+
+  function installObserver(){
+    const box = getRecordBox();
+    if(!box) return;
+    const obs = new MutationObserver(function(){
+      if(applying) return;
+      setTimeout(window.applyRecordNumberPaging, 80);
+    });
+    obs.observe(box, {childList:true});
+    setTimeout(window.applyRecordNumberPaging, 500);
+    setTimeout(window.applyRecordNumberPaging, 1500);
+  }
+
+  if(document.readyState === "loading"){
+    document.addEventListener("DOMContentLoaded", installObserver);
+  }else{
+    installObserver();
+  }
+})();
 </script>
+
 </body>
 </html>
