@@ -215,50 +215,30 @@ textarea#memo{background:#ffffff;border:1px solid #ddd;height:190px;min-height:1
 </style>
 
 <style>
-.recordPager{
+.recordActionRow{
   display:flex;
-  justify-content:center;
-  align-items:center;
   gap:10px;
-  margin:18px 0 6px;
-  padding:4px 0;
-  font-size:18px;
-  color:#111;
+  margin:14px 0 6px;
 }
-.recordPager button{
-  width:auto;
-  min-width:32px;
-  padding:4px 6px;
+.recordActionBtn{
+  flex:1;
+  padding:12px 10px;
+  border-radius:999px;
   border:none;
-  background:transparent;
-  color:#aaa;
-  font-size:28px;
-  font-weight:900;
+  background:#b8b3b1;
+  color:#ffffff;
+  font-size:15px;
+  font-weight:800;
   box-shadow:none;
 }
-.recordPager .pageNum{
-  display:inline-flex;
-  align-items:center;
-  justify-content:center;
-  min-width:26px;
-  height:30px;
-  padding:0 2px;
-  border-radius:8px;
-  font-size:18px;
-  font-weight:500;
-  color:#111;
-  cursor:pointer;
+.recordActionBtn:active{
+  transform:scale(.98);
 }
-.recordPager .pageNum.active{
-  color:#2450a4;
-  font-weight:900;
-  background:#eaf3ff;
-}
-.recordPagerInfo{
+.recordCountInfo{
   text-align:center;
   color:#888;
   font-size:12px;
-  margin:4px 0 8px;
+  margin:6px 0 4px;
 }
 </style>
 
@@ -742,10 +722,18 @@ window.loadRecords = async function(resetCount=true){
   }).join("");
 
   if(records.length > recordDisplayCount){
-    box.innerHTML += `<button type="button" class="moreRecordsBtn" onclick="loadMoreRecords()">이전 기록 더보기</button>
-    <div class="recordCountInfo">최근 ${recordDisplayCount}개 / 전체 ${records.length}개 기록 표시 중</div>`;
+    box.innerHTML += `
+    <div class="recordCountInfo">최근 ${recordDisplayCount}개 / 전체 ${records.length}개 기록 표시 중</div>
+    <div class="recordActionRow">
+      <button type="button" class="recordActionBtn" onclick="event.stopPropagation(); loadMoreRecords();">＋ 기록 더보기</button>
+      <button type="button" class="recordActionBtn" onclick="event.stopPropagation(); scrollToTopArea();">↑ 맨위로</button>
+    </div>`;
   }else{
-    box.innerHTML += `<div class="recordCountInfo">전체 ${records.length}개 기록 표시 중</div>`;
+    box.innerHTML += `
+    <div class="recordCountInfo">전체 ${records.length}개 기록 표시 중</div>
+    <div class="recordActionRow">
+      <button type="button" class="recordActionBtn" onclick="event.stopPropagation(); scrollToTopArea();">↑ 맨위로</button>
+    </div>`;
   }
 
   document.querySelectorAll(".record[data-key]").forEach(el=>{
@@ -758,6 +746,11 @@ window.loadRecords = async function(resetCount=true){
 window.loadMoreRecords = function(){
   recordDisplayCount += 10;
   window.loadRecords(false);
+}
+
+window.scrollToTopArea = function(){
+  const topTarget = document.querySelector("h1") || document.body;
+  topTarget.scrollIntoView({behavior:"smooth", block:"start"});
 }
 
 window.editRecord = async function(key){
@@ -841,115 +834,6 @@ window.toggleChatDoctor = function(btn){
   box.classList.toggle("open");
   btn.textContent = box.classList.contains("open") ? "💬 CHAT DOCTOR 닫기" : "💬 CHAT DOCTOR 보기";
 }
-</script>
-
-
-<script>
-(function(){
-  const PAGE_SIZE = 8;
-  let currentPage = 1;
-  let applying = false;
-
-  function getRecordBox(){
-    return document.getElementById("records");
-  }
-
-  function removeOldPager(box){
-    box.querySelectorAll(".recordPager,.recordPagerInfo").forEach(el => el.remove());
-  }
-
-  window.applyRecordNumberPaging = function(){
-    if(applying) return;
-    const box = getRecordBox();
-    if(!box) return;
-
-    const records = Array.from(box.querySelectorAll(":scope > .record"));
-    if(records.length === 0) return;
-
-    applying = true;
-    removeOldPager(box);
-
-    const totalPages = Math.max(1, Math.ceil(records.length / PAGE_SIZE));
-    if(currentPage > totalPages) currentPage = totalPages;
-    if(currentPage < 1) currentPage = 1;
-
-    records.forEach((el, idx) => {
-      const page = Math.floor(idx / PAGE_SIZE) + 1;
-      el.style.display = (page === currentPage) ? "" : "none";
-    });
-
-    if(totalPages > 1){
-      const pager = document.createElement("div");
-      pager.className = "recordPager";
-
-      const prev = document.createElement("button");
-      prev.type = "button";
-      prev.textContent = "◀";
-      prev.onclick = function(e){
-        e.stopPropagation();
-        if(currentPage > 1){
-          currentPage--;
-          window.applyRecordNumberPaging();
-          box.scrollIntoView({behavior:"smooth", block:"start"});
-        }
-      };
-      pager.appendChild(prev);
-
-      for(let i=1; i<=totalPages; i++){
-        const num = document.createElement("span");
-        num.className = "pageNum" + (i === currentPage ? " active" : "");
-        num.textContent = i;
-        num.onclick = function(e){
-          e.stopPropagation();
-          currentPage = i;
-          window.applyRecordNumberPaging();
-          box.scrollIntoView({behavior:"smooth", block:"start"});
-        };
-        pager.appendChild(num);
-      }
-
-      const next = document.createElement("button");
-      next.type = "button";
-      next.textContent = "▶";
-      next.onclick = function(e){
-        e.stopPropagation();
-        if(currentPage < totalPages){
-          currentPage++;
-          window.applyRecordNumberPaging();
-          box.scrollIntoView({behavior:"smooth", block:"start"});
-        }
-      };
-      pager.appendChild(next);
-
-      const info = document.createElement("div");
-      info.className = "recordPagerInfo";
-      info.textContent = "페이지 " + currentPage + " / " + totalPages + " · 전체 " + records.length + "개 기록";
-
-      box.appendChild(pager);
-      box.appendChild(info);
-    }
-
-    applying = false;
-  };
-
-  function installObserver(){
-    const box = getRecordBox();
-    if(!box) return;
-    const obs = new MutationObserver(function(){
-      if(applying) return;
-      setTimeout(window.applyRecordNumberPaging, 80);
-    });
-    obs.observe(box, {childList:true});
-    setTimeout(window.applyRecordNumberPaging, 500);
-    setTimeout(window.applyRecordNumberPaging, 1500);
-  }
-
-  if(document.readyState === "loading"){
-    document.addEventListener("DOMContentLoaded", installObserver);
-  }else{
-    installObserver();
-  }
-})();
 </script>
 
 </body>
