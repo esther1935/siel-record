@@ -200,7 +200,41 @@ textarea#memo{background:#ffffff;border:1px solid #ddd;height:190px;min-height:1
 .chatDoctorContent u{text-decoration:underline}
 </style>
 
+
+<style>
+.moreRecordsBtn{
+  display:block;
+  width:100%;
+  margin:14px 0 4px;
+  padding:12px 14px;
+  border-radius:14px;
+  border:1px solid #cfe3ff;
+  background:#eaf3ff;
+  color:#2450a4;
+  font-size:15px;
+  font-weight:800;
+  box-shadow:none;
+}
+.recordCountInfo{
+  text-align:center;
+  color:#777;
+  font-size:13px;
+  margin-top:8px;
+}
+</style>
+
+
+<style>
+.growthMemoContent,
+.growthMemo,
+.growth-note,
+.growth-note-content{
+  white-space: pre-wrap !important;
+  line-height:1.6 !important;
+}
+</style>
 </head>
+
 <body>
 <div class="container">
 <h1>시엘 수면 및 컨디션</h1>
@@ -652,14 +686,18 @@ function conditionDots(list){
   return list.map(v => `${levelDot(v)}${v}`).join(", ");
 }
 
-window.loadRecords = async function(){
+let recordDisplayCount = 10;
+
+window.loadRecords = async function(resetCount=true){
   const records=await getRecords();
   const box=document.getElementById("records");
+  if(resetCount) recordDisplayCount = 10;
   if(records.length===0){box.innerHTML="기록 없음";return}
 
   records.sort((a,b)=>getRecordKey(b).localeCompare(getRecordKey(a)));
+  const visibleRecords = records.slice(0, recordDisplayCount);
 
-  box.innerHTML=records.map((r,idx)=>{
+  box.innerHTML=visibleRecords.map((r,idx)=>{
     const k=getRecordKey(r);
     return `
     <div class="record" data-key="${k}" data-index="${idx}">
@@ -669,16 +707,28 @@ window.loadRecords = async function(){
       <b>🌿 컨디션:</b> ${(r.condition||[]).join(", ")||"-"}<br>
       <b>💊 복용약:</b> ${(r.medicine||[]).join(", ")||"-"}<br>
       <div class="recordMemo">${r.memo||"-"}</div>
-      ${r.growthMemo ? `<div style="background:#D0F0F8;border-radius:10px;padding:6px 8px;margin-top:6px;font-weight:700">🌳 성장 메모: ${r.growthMemo}</div>` : ""}
+      ${r.growthMemo ? `<div style="background:#D0F0F8;border-radius:10px;padding:6px 8px;margin-top:6px;font-weight:700">🌳 성장 메모: ${String(r.growthMemo||"").replace(/\n/g,"<br>")}</div>` : ""}
       ${r.chatDoctorMemo ? `<button type="button" class="chatDoctorToggle" onclick="event.stopPropagation(); toggleChatDoctor(this);">💬 CHAT DOCTOR 보기</button><div class="chatDoctorContent">${sanitizeSimpleEditorHtml(r.chatDoctorMemo)}</div>` : ""}
     </div>`;
   }).join("");
+
+  if(records.length > recordDisplayCount){
+    box.innerHTML += `<button type="button" class="moreRecordsBtn" onclick="loadMoreRecords()">이전 기록 더보기</button>
+    <div class="recordCountInfo">최근 ${recordDisplayCount}개 / 전체 ${records.length}개 기록 표시 중</div>`;
+  }else{
+    box.innerHTML += `<div class="recordCountInfo">전체 ${records.length}개 기록 표시 중</div>`;
+  }
 
   document.querySelectorAll(".record[data-key]").forEach(el=>{
     el.addEventListener("click", function(){
       window.editRecord(this.getAttribute("data-key"));
     });
   });
+}
+
+window.loadMoreRecords = function(){
+  recordDisplayCount += 10;
+  window.loadRecords(false);
 }
 
 window.editRecord = async function(key){
