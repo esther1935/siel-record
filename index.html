@@ -279,6 +279,13 @@ textarea#memo{background:#ffffff;border:1px solid #ddd;height:190px;min-height:1
 <option>없음</option><option>머리/얼굴 약하게</option><option>귀 때림</option><option>허벅지 때림</option><option>멍/상처 있음</option><option>심함</option>
 </select>
 
+
+<label>🍚 식사량</label>
+<select id="mealAmount">
+<option>보통</option><option>많이 먹음</option><option>조금</option><option>안 먹음</option>
+</select>
+
+
 <label>🌡️ 컨디션</label>
 <div class="checkGrid">
 <label class="checkItem"><input type="checkbox" id="cond_stable">안정적임</label>
@@ -307,7 +314,7 @@ textarea#memo{background:#ffffff;border:1px solid #ddd;height:190px;min-height:1
 <label class="checkItem"><input type="checkbox" id="med_vitd">비타민D</label>
 <label class="checkItem"><input type="checkbox" id="med_probiotics">유산균</label>
 <label class="checkItem"><input type="checkbox" id="med_omega3">오메가3</label>
-<label class="checkItem"><input type="checkbox" id="med_othersupp">기타영양제</label>
+<label class="checkItem"><input type="checkbox" id="med_othersupp">보울라디</label>
 </div>
 
 <label>📝 메모</label>
@@ -431,8 +438,13 @@ async function setRecords(records){
 
 const medMap=[
 ["med_risperidone","리스페리돈"],["med_melatonin","멜라토닌"],["med_sleep","명세핀"],["med_otherdrug","기타약"],
-["med_b2","B2"],["med_vitc","비타민C"],["med_vitd","비타민D"],["med_probiotics","유산균"],["med_omega3","오메가3"],["med_othersupp","기타영양제"]
+["med_b2","B2"],["med_vitc","비타민C"],["med_vitd","비타민D"],["med_probiotics","유산균"],["med_omega3","오메가3"],["med_othersupp","보울라디"]
 ];
+
+
+function normalizeMedicineList(list){
+  return (list || []).map(v => v === "기타영양제" || v === "기타 영양제" ? "보울라디" : v);
+}
 
 const conditionMap=[
 ["cond_stable","안정적임"],["cond_sensitive","예민함"],["cond_anxiety","조절하려함"],["cond_transition","불안함"],
@@ -499,7 +511,7 @@ window.formatMemo = function(type){
 }
 
 function setChecks(map,selected){
-  selected=selected||[];
+  selected=normalizeMedicineList(selected||[]);
   map.forEach(([id,name])=>{document.getElementById(id).checked=selected.includes(name)});
 }
 
@@ -509,6 +521,7 @@ function defaultForm(){
   document.getElementById("sleepMinutes").value="";
   document.getElementById("aggression").value="0 없음";
   document.getElementById("selfharm").value="없음";
+  document.getElementById("mealAmount").value="보통";
   setMemoContent("");
 document.getElementById("growthMemo").value="";
   const cdm0=document.getElementById("chatDoctorMemo"); if(cdm0) setChatDoctorContent("");
@@ -523,6 +536,7 @@ function fillForm(r){
   document.getElementById("sleepMinutes").value=r.sleepMinutes||"";
   document.getElementById("aggression").value=r.aggression||"0 없음";
   document.getElementById("selfharm").value=r.selfharm||"없음";
+  document.getElementById("mealAmount").value=r.mealAmount||"보통";
   setMemoContent(r.memo||"");
 document.getElementById("growthMemo").value=r.growthMemo||"";
   const cdm=document.getElementById("chatDoctorMemo"); if(cdm) setChatDoctorContent(r.chatDoctorMemo||"");
@@ -582,6 +596,7 @@ window.saveSelectedDate = async function(){
     sleepTotal:sleepTotalText(),
     aggression:document.getElementById("aggression").value,
     selfharm:document.getElementById("selfharm").value,
+    mealAmount:document.getElementById("mealAmount").value,
     condition:getCheckedList(conditionMap),
     medicine:getCheckedList(medMap),
     memo:getMemoContent(),
@@ -712,9 +727,9 @@ window.loadRecords = async function(resetCount=true){
     <div class="record" data-key="${k}" data-index="${idx}">
       <div class="recordDate">📅 ${k} (${getKoreanWeekday(k)})</div>
       <b>🌙 수면:</b> ${levelDot(r.sleep)}${r.sleep||"-"} &nbsp;&nbsp; <b>🕒 총수면:</b> ${r.sleepTotal||"-"}<br>
-      <b>👦 공격성:</b> ${levelDot(r.aggression)}${cleanAggression(r.aggression)} &nbsp;&nbsp; <b>😣 자해:</b> ${levelDot(r.selfharm)}${r.selfharm||"-"}<br>
+      <b>👦 공격성:</b> ${levelDot(r.aggression)}${cleanAggression(r.aggression)} &nbsp;&nbsp; <b>😣 자해:</b> ${levelDot(r.selfharm)}${r.selfharm||"-"} &nbsp;&nbsp; <b>🍚 식사량:</b> ${r.mealAmount||"-"}<br>
       <b>🌿 컨디션:</b> ${(r.condition||[]).join(", ")||"-"}<br>
-      <b>💊 복용약:</b> ${(r.medicine||[]).join(", ")||"-"}<br>
+      <b>💊 복용약:</b> ${normalizeMedicineList(r.medicine||[]).join(", ")||"-"}<br>
       <div class="recordMemo">${r.memo||"-"}</div>
       ${r.growthMemo ? `<div style="background:#D0F0F8;border-radius:10px;padding:6px 8px;margin-top:6px;font-weight:700">🌳 성장 메모: ${String(r.growthMemo||"").replace(/\n/g,"<br>")}</div>` : ""}
       ${r.chatDoctorMemo ? `<button type="button" class="chatDoctorToggle" onclick="event.stopPropagation(); toggleChatDoctor(this);">💬 CHAT DOCTOR 보기</button><div class="chatDoctorContent">${sanitizeSimpleEditorHtml(r.chatDoctorMemo)}</div>` : ""}
