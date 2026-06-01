@@ -814,5 +814,30 @@ window.toggleChatDoctor = function(btn){
 }
 </script>
 
+
+<style>
+.moreRecordsBtn{display:block;width:100%;margin:12px 0;padding:10px;border-radius:12px;border:1px solid #cfe3ff;background:#eaf3ff;color:#2450a4;font-weight:700}
+</style>
+<script>
+window.recordDisplayCount=8;
+window.applyRecordPaging=function(){
+ const box=document.getElementById('records');
+ if(!box) return;
+ const records=box.querySelectorAll('.record');
+ if(records.length===0) return;
+ records.forEach((el,i)=>{el.style.display=(i<window.recordDisplayCount)?'':'none';});
+ let btn=document.getElementById('moreRecordsBtn');
+ if(!btn){
+   btn=document.createElement('button');
+   btn.id='moreRecordsBtn';
+   btn.className='moreRecordsBtn';
+   btn.textContent='이전 기록 더보기';
+   btn.onclick=function(){window.recordDisplayCount+=8;window.applyRecordPaging();};
+   box.appendChild(btn);
+ }
+ btn.style.display=(records.length>window.recordDisplayCount)?'':'none';
+};
+setTimeout(()=>{try{applyRecordPaging();}catch(e){}},2000);
+</script>
 </body>
 </html>
