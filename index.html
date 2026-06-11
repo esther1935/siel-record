@@ -16,7 +16,7 @@ body{font-family:Arial,"Noto Sans KR",sans-serif;background:#f5f7fb;margin:0;pad
 h1{text-align:center;font-size:25px;margin:10px 0 6px}
 .subtitle{text-align:center;font-size:14px;color:#666;margin-bottom:14px}
 .card{background:#fff;border-radius:20px;padding:18px;margin-bottom:14px;box-shadow:0 2px 10px rgba(0,0,0,.08)}
-label{display:block;margin-top:12px;font-weight:700;font-size:16px}
+label{display:block;margin-top:12px;font-weight: normal;font-size:16px}
 select,textarea,button,input{width:100%;box-sizing:border-box;padding:12px;border-radius:12px;border:1px solid #ddd;margin-top:6px;font-size:16px;background:white}
 button{background:#5b8def;color:white;border:none;font-weight:800;margin-top:16px}
 button:active{transform:scale(.98)}
@@ -42,41 +42,208 @@ button:active{transform:scale(.98)}
 .checkItem{background:#f5f7fb;border-radius:12px;padding:10px;display:flex;align-items:center;gap:8px;font-size:15px}
 .checkItem input{width:auto;margin:0}
 .sectionTitle{margin-top:16px;font-size:15px;font-weight:800;color:#2450a4}
-textarea#memo{min-height:150px;overflow:hidden;resize:vertical;line-height:1.6}
+textarea#memo{background:#ffffff;border:1px solid #ddd;height:190px;min-height:190px;max-height:190px;overflow-y:scroll;resize:vertical;line-height:1.6;-webkit-overflow-scrolling:touch;font-weight:normal;}
+
+.growthMemoBox{background:transparent;border:none;border-radius:0;padding:0;margin-top:6px}
+.growthMemoBox textarea{background:#DEF5FA;border:1px solid #bfe9f3;border-radius:18px;min-height:120px;height:120px;max-height:120px;overflow-y:auto;resize:none;margin-top:0;font-weight:normal;line-height:1.6;-webkit-overflow-scrolling:touch;}
 </style>
 
 <style>
-.backupBox{
-  display:flex;
-  gap:8px;
-  margin:10px 0 4px;
+#growthMemo,
+#growthMemo::placeholder{
+  font-weight:normal !important;
 }
-.backupBtn{
-  flex:1;
-  padding:10px 8px;
-  border-radius:12px;
-  border:1px solid #cfe3ff;
-  background:#eaf3ff;
-  color:#2450a4;
+#memo{
+  background:#ffffff !important;
+  font-weight:normal !important;
+}
+</style>
+
+
+<style>
+.memoToolbar{
+  display:flex;
+  gap:6px;
+  margin-top:6px;
+  margin-bottom:4px;
+}
+.memoToolbar .miniBtn{
+  width:auto;
+  min-width:44px;
+  padding:7px 10px;
+  margin:0;
+  border-radius:10px;
+  border:1px solid #d6d6d6;
+  background:#f7f7f7;
+  color:#222;
   font-size:14px;
+  font-weight:700;
+  box-shadow:none;
+}
+.memoToolbar .miniBtn:active{transform:scale(.98)}
+.memoToolbar .underlineBtn{text-decoration:underline}
+.memoToolbar .redBtn{color:#d90000}
+.memoToolbar .blackBtn{color:#222}
+.memoToolbar .grayBtn{color:#ABA7A8}
+.memoEditor{
+  width:100%;
+  box-sizing:border-box;
+  padding:12px;
+  border-radius:12px;
+  border:1px solid #ddd;
+  margin-top:6px;
+  font-size:16px;
+  background:#ffffff;
+  color:#222;
+  height:190px;
+  min-height:190px;
+  max-height:190px;
+  overflow-y:auto;
+  resize:vertical;
+  line-height:1.6;
+  -webkit-overflow-scrolling:touch;
+  font-weight:normal;
+  outline:none;
+  white-space:pre-wrap;
+}
+.memoEditor:focus{
+  border-color:#b9c7e6;
+}
+.recordMemo{
+  white-space:normal;
+  word-break:break-word;
+}
+.recordMemo b,
+.recordMemo strong{font-weight:700}
+.recordMemo u{text-decoration:underline}
+</style>
+
+
+<style>
+.chatDoctorBox{margin-top:14px;}
+.chatDoctorBox label{display:block;margin-bottom:6px;}
+#chatDoctorMemo{
+  width:100%;box-sizing:border-box;padding:12px;border-radius:14px;border:1px solid #ddd;
+  background:#ffffff;color:#222;font-size:16px;line-height:1.6;height:170px;min-height:170px;
+  max-height:170px;overflow-y:auto;resize:vertical;-webkit-overflow-scrolling:touch;font-weight:normal;
+}
+.chatDoctorToggle{
+  margin-top:12px;padding:8px 12px;border-radius:999px;border:1px solid #cfe3ff;
+  background:#eaf3ff;color:#2450a4;font-size:13px;font-weight:800;box-shadow:none;
+}
+.chatDoctorContent{
+  display:none;margin-top:10px;padding:14px 16px;border-radius:16px;background:#f3f8ff;
+  color:#333;line-height:1.65;white-space:pre-line;word-break:keep-all;font-size:15px;
+}
+.chatDoctorContent.open{display:block;}
+</style>
+
+
+<style>
+.chatDoctorToolbar{
+  display:flex;
+  gap:6px;
+  margin-top:6px;
+  margin-bottom:4px;
+}
+.chatDoctorToolbar .miniBtn{
+  width:auto;
+  min-width:44px;
+  padding:7px 10px;
+  margin:0;
+  border-radius:10px;
+  border:1px solid #d6d6d6;
+  background:#f7f7f7;
+  color:#222;
+  font-size:14px;
+  font-weight:700;
+  box-shadow:none;
+}
+.chatDoctorToolbar .miniBtn:active{transform:scale(.98)}
+.chatDoctorToolbar .underlineBtn{text-decoration:underline}
+.chatDoctorToolbar .redBtn{color:#d90000}
+.chatDoctorToolbar .blackBtn{color:#222}
+.chatDoctorEditor{
+  width:100%;
+  box-sizing:border-box;
+  padding:12px;
+  border-radius:14px;
+  border:1px solid #ddd;
+  background:#ffffff;
+  color:#222;
+  font-size:16px;
+  line-height:1.6;
+  height:170px;
+  min-height:170px;
+  max-height:170px;
+  overflow-y:auto;
+  resize:vertical;
+  -webkit-overflow-scrolling:touch;
+  font-weight:normal;
+  outline:none;
+  white-space:pre-wrap;
+}
+.chatDoctorEditor:focus{
+  border-color:#b9c7e6;
+}
+.chatDoctorContent{
+  white-space:normal !important;
+  word-break:break-word !important;
+}
+.chatDoctorContent div{
+  margin:0 !important;
+  padding:0 !important;
+  line-height:1.6 !important;
+}
+.chatDoctorContent b,
+.chatDoctorContent strong{font-weight:700}
+.chatDoctorContent u{text-decoration:underline}
+</style>
+
+
+
+
+
+<style>
+.growthMemoContent,
+.growthMemo,
+.growth-note,
+.growth-note-content{
+  white-space: pre-wrap !important;
+  line-height:1.6 !important;
+}
+</style>
+
+<style>
+.recordActionRow{
+  display:flex;
+  gap:10px;
+  margin:14px 0 6px;
+}
+.recordActionBtn{
+  flex:1;
+  padding:12px 10px;
+  border-radius:999px;
+  border:none;
+  background:#b8b3b1;
+  color:#ffffff;
+  font-size:15px;
   font-weight:800;
   box-shadow:none;
 }
-.backupBtn.danger{
-  background:#fff3f3;
-  border-color:#ffd1d1;
-  color:#a43c3c;
+.recordActionBtn:active{
+  transform:scale(.98);
 }
-.backupHint{
-  color:#777;
-  font-size:12px;
-  line-height:1.5;
-  margin:4px 0 10px;
+.recordCountInfo{
   text-align:center;
+  color:#888;
+  font-size:12px;
+  margin:6px 0 4px;
 }
 </style>
 
 </head>
+
 <body>
 <div class="container">
 <h1>시엘 수면 및 컨디션</h1>
@@ -89,10 +256,10 @@ textarea#memo{min-height:150px;overflow:hidden;resize:vertical;line-height:1.6}
 
 <label>🌙 수면</label>
 <select id="sleep">
-<option>좋음</option><option>보통</option><option>나쁨</option><option>새벽각성/분절수면</option><option>낮잠/졸림 많음</option>
+<option>좋음</option><option>보통</option><option>나쁨</option><option>새벽각성/분절수면</option><option>낮잠/피곤함/졸림 많음</option>
 </select>
 
-<label>🕒 총수면시간</label>
+<label>🕒 총수면</label>
 <div class="row2">
 <select id="sleepHours">
 <option value="">시간</option><option>4</option><option>5</option><option>6</option><option>7</option><option>8</option><option>9</option><option>10</option><option>11</option><option>12</option>
@@ -112,16 +279,23 @@ textarea#memo{min-height:150px;overflow:hidden;resize:vertical;line-height:1.6}
 <option>없음</option><option>머리/얼굴 약하게</option><option>귀 때림</option><option>허벅지 때림</option><option>멍/상처 있음</option><option>심함</option>
 </select>
 
+
+<label>🍚 식사량</label>
+<select id="mealAmount">
+<option>보통</option><option>많이 먹음</option><option>조금</option><option>안 먹음</option>
+</select>
+
+
 <label>🌡️ 컨디션</label>
 <div class="checkGrid">
 <label class="checkItem"><input type="checkbox" id="cond_stable">안정적임</label>
 <label class="checkItem"><input type="checkbox" id="cond_sensitive">예민함</label>
-<label class="checkItem"><input type="checkbox" id="cond_anxiety">피로함</label>
+<label class="checkItem"><input type="checkbox" id="cond_anxiety">조절하려함</label>
 <label class="checkItem"><input type="checkbox" id="cond_transition">불안함</label>
 <label class="checkItem"><input type="checkbox" id="cond_waiting">기다림 어려움</label>
 <label class="checkItem"><input type="checkbox" id="cond_crying">울음</label>
-<label class="checkItem"><input type="checkbox" id="cond_sleepy">졸림</label>
-<label class="checkItem"><input type="checkbox" id="cond_stim">특이행동</label>
+<label class="checkItem"><input type="checkbox" id="cond_sleepy">피곤함/졸림</label>
+<label class="checkItem"><input type="checkbox" id="cond_stim">텐트럼</label>
 </div>
 
 <label>💊 복용약</label>
@@ -140,21 +314,42 @@ textarea#memo{min-height:150px;overflow:hidden;resize:vertical;line-height:1.6}
 <label class="checkItem"><input type="checkbox" id="med_vitd">비타민D</label>
 <label class="checkItem"><input type="checkbox" id="med_probiotics">유산균</label>
 <label class="checkItem"><input type="checkbox" id="med_omega3">오메가3</label>
-<label class="checkItem"><input type="checkbox" id="med_othersupp">기타영양제</label>
+<label class="checkItem"><input type="checkbox" id="med_othersupp">보울라디</label>
 </div>
 
 <label>📝 메모</label>
-<textarea id="memo" rows="7" oninput="autoResizeMemo()"></textarea>
+
+<div class="memoToolbar" aria-label="메모 간단 편집 도구">
+  <button type="button" class="miniBtn" onclick="formatMemo('bold')">B</button>
+  <button type="button" class="miniBtn underlineBtn" onclick="formatMemo('underline')">U</button>
+  <button type="button" class="miniBtn redBtn" onclick="formatMemo('red')">빨강</button>
+  <button type="button" class="miniBtn blackBtn" onclick="formatMemo('black')">검정</button>
+  <button type="button" class="miniBtn grayBtn" onclick="formatMemo('gray')">회색</button>
+</div>
+<div id="memo" class="memoEditor" contenteditable="true" aria-label="메모 입력란"></div>
+
+
+<label>🌳 성장 메모</label>
+<div class="growthMemoBox">
+<textarea id="growthMemo" rows="1" placeholder="오늘 시엘이의 작은 성장 한 줄"></textarea>
+
+<div class="chatDoctorBox">
+  <label><b>💬 CHAT DOCTOR</b></label>
+  
+<div class="chatDoctorToolbar" aria-label="CHAT DOCTOR 간단 편집 도구">
+  <button type="button" class="miniBtn" onclick="formatChatDoctor('bold')">B</button>
+  <button type="button" class="miniBtn underlineBtn" onclick="formatChatDoctor('underline')">U</button>
+  <button type="button" class="miniBtn redBtn" onclick="formatChatDoctor('red')">빨강</button>
+  <button type="button" class="miniBtn blackBtn" onclick="formatChatDoctor('black')">검정</button>
+</div>
+<div id="chatDoctorMemo" class="chatDoctorEditor" contenteditable="true" aria-label="CHAT DOCTOR 입력란"></div>
+
+</div>
+
+</div>
+
 
 <button onclick="saveSelectedDate()">선택한 날짜 기록 저장/수정</button>
-
-<div class="backupBox">
-  <button class="backupBtn" onclick="downloadBackup()">📦 백업 다운로드</button>
-  <button class="backupBtn danger" onclick="restoreLatestBackup()">↩ 마지막 백업 복구</button>
-</div>
-<div class="backupHint">저장 전 현재 기록을 자동 백업합니다. 문제가 생기면 마지막 백업을 복구할 수 있어요.</div>
-
-<button class="green" onclick="resetForNewDate()">입력칸 비우기</button>
 <div id="saved" class="notice" style="display:none"></div>
 </div>
 
@@ -181,113 +376,50 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const cloudDoc = doc(db, "shared", "all_records");
-const backupLatestDoc = doc(db, "shared", "all_records_backup_latest");
 
-function todayKey(){return new Date().toISOString().slice(0,10)}
+function todayKey(){
+  const d = new Date();
+  const y = d.getFullYear();
+  const m = String(d.getMonth()+1).padStart(2,"0");
+  const day = String(d.getDate()).padStart(2,"0");
+  return y + "-" + m + "-" + day;
+}
 function nowText(){return new Date().toLocaleString("ko-KR")}
 
-function safeBackupId(){
-  const d = new Date();
-  const pad = n => String(n).padStart(2,"0");
-  return d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate())+"_"+pad(d.getHours())+"-"+pad(d.getMinutes())+"-"+pad(d.getSeconds());
+let currentEditKey = "";
+
+function normalizeDateKey(value){
+  if(value && typeof value === "object"){
+    if(typeof value.toDate === "function") value = value.toDate();
+    if(value instanceof Date){
+      const y=value.getFullYear();
+      const m=String(value.getMonth()+1).padStart(2,"0");
+      const d=String(value.getDate()).padStart(2,"0");
+      return y+"-"+m+"-"+d;
+    }
+  }
+
+  value = String(value || "").trim();
+  if(!value) return "";
+
+  // 여러 날짜 표기법을 모두 YYYY-MM-DD로 통일
+  const m = value.match(/(\d{4})\D+(\d{1,2})\D+(\d{1,2})/);
+  if(m){
+    return m[1] + "-" + String(m[2]).padStart(2,"0") + "-" + String(m[3]).padStart(2,"0");
+  }
+
+  return value.slice(0,10);
 }
 
-function cloneRecords(records){
-  try{
-    return JSON.parse(JSON.stringify(records || []));
-  }catch(e){
-    return records || [];
-  }
+function getRecordKey(r){
+  return normalizeDateKey((r && (r.key || r.date || r.recordDate)) || "");
 }
 
-async function createBackup(records, reason="before-save"){
-  const backup = {
-    records: cloneRecords(records),
-    backedUpAt: nowText(),
-    reason: reason
-  };
-
-  try{
-    localStorage.setItem("siel_last_backup", JSON.stringify(backup));
-    const historyKey = "siel_backup_history";
-    const history = JSON.parse(localStorage.getItem(historyKey) || "[]");
-    history.unshift(backup);
-    localStorage.setItem(historyKey, JSON.stringify(history.slice(0,10)));
-  }catch(e){
-    console.warn("localStorage backup failed", e);
-  }
-
-  try{
-    await setDoc(backupLatestDoc, backup);
-    await setDoc(doc(db, "backups", safeBackupId()), backup);
-  }catch(e){
-    console.warn("Firebase backup failed", e);
-  }
+function findRecordIndex(records, key){
+  const nkey = normalizeDateKey(key);
+  if(!nkey) return -1;
+  return records.findIndex(r => getRecordKey(r) === nkey);
 }
-
-window.downloadBackup = async function(){
-  let backup = null;
-
-  try{
-    const snap = await getDoc(cloudDoc);
-    backup = {
-      records: snap.exists() ? (snap.data().records || []) : [],
-      backedUpAt: nowText(),
-      reason: "manual-download"
-    };
-  }catch(e){
-    try{
-      backup = JSON.parse(localStorage.getItem("siel_last_backup") || "null");
-    }catch(err){}
-  }
-
-  if(!backup){
-    alert("다운로드할 백업이 없습니다.");
-    return;
-  }
-
-  const blob = new Blob([JSON.stringify(backup, null, 2)], {type:"application/json;charset=utf-8;"});
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = "siel_backup_" + safeBackupId() + ".json";
-  a.click();
-  URL.revokeObjectURL(url);
-}
-
-window.restoreLatestBackup = async function(){
-  if(!confirm("마지막 백업으로 복구할까요? 현재 기록은 복구 전 자동 백업됩니다.")) return;
-
-  let backup = null;
-
-  try{
-    const snap = await getDoc(backupLatestDoc);
-    if(snap.exists()) backup = snap.data();
-  }catch(e){
-    console.warn("Firebase backup read failed", e);
-  }
-
-  if(!backup){
-    try{
-      backup = JSON.parse(localStorage.getItem("siel_last_backup") || "null");
-    }catch(e){}
-  }
-
-  if(!backup || !Array.isArray(backup.records)){
-    alert("복구할 백업을 찾지 못했습니다.");
-    return;
-  }
-
-  const current = await getRecords();
-  await createBackup(current, "before-restore");
-
-  await setDoc(cloudDoc, {records: backup.records, updatedAt: nowText(), restoredAt: nowText()});
-  alert("마지막 백업으로 복구했습니다.");
-  await loadRecords();
-  await loadSelectedDate();
-  autoResizeMemo();
-}
-
 
 async function getRecords(){
   try{
@@ -301,29 +433,22 @@ async function getRecords(){
 }
 
 async function setRecords(records){
-  try{
-    const snap = await getDoc(cloudDoc);
-    const currentRecords = snap.exists() ? (snap.data().records || []) : [];
-    await createBackup(currentRecords, "before-save");
-  }catch(e){
-    console.warn("자동 백업 중 오류", e);
-  }
-
   await setDoc(cloudDoc, {records: records, updatedAt: nowText()});
-
-  try{
-    localStorage.setItem("siel_current_records", JSON.stringify({records: records, updatedAt: nowText()}));
-  }catch(e){}
 }
 
 const medMap=[
 ["med_risperidone","리스페리돈"],["med_melatonin","멜라토닌"],["med_sleep","명세핀"],["med_otherdrug","기타약"],
-["med_b2","B2"],["med_vitc","비타민C"],["med_vitd","비타민D"],["med_probiotics","유산균"],["med_omega3","오메가3"],["med_othersupp","기타영양제"]
+["med_b2","B2"],["med_vitc","비타민C"],["med_vitd","비타민D"],["med_probiotics","유산균"],["med_omega3","오메가3"],["med_othersupp","보울라디"]
 ];
 
+
+function normalizeMedicineList(list){
+  return (list || []).map(v => v === "기타영양제" || v === "기타 영양제" ? "보울라디" : v);
+}
+
 const conditionMap=[
-["cond_stable","안정적임"],["cond_sensitive","예민함"],["cond_anxiety","피로함"],["cond_transition","불안함"],
-["cond_waiting","기다림 어려움"],["cond_crying","울음"],["cond_sleepy","졸림"],["cond_stim","특이행동"]
+["cond_stable","안정적임"],["cond_sensitive","예민함"],["cond_anxiety","조절하려함"],["cond_transition","불안함"],
+["cond_waiting","기다림 어려움"],["cond_crying","울음"],["cond_sleepy","피곤함/졸림"],["cond_stim","텐트럼"]
 ];
 
 function getCheckedList(map){
@@ -332,8 +457,61 @@ function getCheckedList(map){
   return list;
 }
 
+
+
+function setChatDoctorContent(value){
+  const el = document.getElementById("chatDoctorMemo");
+  if(!el) return;
+  el.innerHTML = value || "";
+}
+
+function getChatDoctorContent(){
+  const el = document.getElementById("chatDoctorMemo");
+  if(!el) return "";
+  return el.innerHTML.trim();
+}
+
+function focusChatDoctor(){
+  const el = document.getElementById("chatDoctorMemo");
+  if(el) el.focus();
+}
+
+window.formatChatDoctor = function(type){
+  focusChatDoctor();
+  if(type === "bold") document.execCommand("bold", false, null);
+  if(type === "underline") document.execCommand("underline", false, null);
+  if(type === "red") document.execCommand("foreColor", false, "#d90000");
+  if(type === "black") document.execCommand("foreColor", false, "#222222");
+}
+
+function setMemoContent(value){
+  const memo = document.getElementById("memo");
+  if(!memo) return;
+  memo.innerHTML = value || "";
+}
+
+function getMemoContent(){
+  const memo = document.getElementById("memo");
+  if(!memo) return "";
+  return memo.innerHTML.trim();
+}
+
+function focusMemo(){
+  const memo = document.getElementById("memo");
+  if(memo) memo.focus();
+}
+
+window.formatMemo = function(type){
+  focusMemo();
+  if(type === "bold") document.execCommand("bold", false, null);
+  if(type === "underline") document.execCommand("underline", false, null);
+  if(type === "red") document.execCommand("foreColor", false, "#d90000");
+  if(type === "black") document.execCommand("foreColor", false, "#222222");
+  if(type === "gray") document.execCommand("foreColor", false, "#ABA7A8");
+}
+
 function setChecks(map,selected){
-  selected=selected||[];
+  selected=normalizeMedicineList(selected||[]);
   map.forEach(([id,name])=>{document.getElementById(id).checked=selected.includes(name)});
 }
 
@@ -343,7 +521,10 @@ function defaultForm(){
   document.getElementById("sleepMinutes").value="";
   document.getElementById("aggression").value="0 없음";
   document.getElementById("selfharm").value="없음";
-  document.getElementById("memo").value="";
+  document.getElementById("mealAmount").value="보통";
+  setMemoContent("");
+document.getElementById("growthMemo").value="";
+  const cdm0=document.getElementById("chatDoctorMemo"); if(cdm0) setChatDoctorContent("");
   setTimeout(autoResizeMemo, 0);
   setChecks(medMap,[]);
   setChecks(conditionMap,[]);
@@ -355,20 +536,32 @@ function fillForm(r){
   document.getElementById("sleepMinutes").value=r.sleepMinutes||"";
   document.getElementById("aggression").value=r.aggression||"0 없음";
   document.getElementById("selfharm").value=r.selfharm||"없음";
-  document.getElementById("memo").value=r.memo||"";
+  document.getElementById("mealAmount").value=r.mealAmount||"보통";
+  setMemoContent(r.memo||"");
+document.getElementById("growthMemo").value=r.growthMemo||"";
+  const cdm=document.getElementById("chatDoctorMemo"); if(cdm) setChatDoctorContent(r.chatDoctorMemo||"");
   setTimeout(autoResizeMemo, 0);
   setChecks(medMap,r.medicine||[]);
   setChecks(conditionMap,r.condition||[]);
 }
 
 window.loadSelectedDate = async function(){
-  const key=document.getElementById("recordDate").value;
+  const key=normalizeDateKey(document.getElementById("recordDate").value);
+  currentEditKey = key;
+
   const records=await getRecords();
-  const found=records.find(r=>r.key===key);
+  const foundIndex=findRecordIndex(records,key);
+  const found=foundIndex>=0 ? records[foundIndex] : null;
   const el=document.getElementById("dateInfo");
   document.getElementById("saved").style.display="none";
-  if(found){fillForm(found);el.innerHTML="<b>"+key+" 기록 있음</b><br>내용 수정 후 저장 가능합니다."}
-  else{defaultForm();el.innerHTML="<b>"+key+" 기록 없음</b>"}
+
+  if(found){
+    fillForm(found);
+    el.innerHTML="<b>"+key+" 기록 있음</b><br>내용 수정 후 저장 가능합니다.";
+  } else {
+    defaultForm();
+    el.innerHTML="<b>"+key+" 기록 없음</b>";
+  }
 }
 
 function sleepTotalText(){
@@ -379,37 +572,115 @@ function sleepTotalText(){
 }
 
 window.saveSelectedDate = async function(){
-  const key=document.getElementById("recordDate").value;
+  const key=normalizeDateKey(document.getElementById("recordDate").value);
   if(!key){alert("날짜 선택");return}
+
   let records=await getRecords();
-  const existingIndex=records.findIndex(r=>r.key===key);
+
+  // 오늘 새로 저장한 기록도 같은 날짜면 반드시 수정 모드로 인식
+  let existingIndex=findRecordIndex(records,key);
+  if(existingIndex < 0 && currentEditKey){
+    existingIndex=findRecordIndex(records,currentEditKey);
+  }
+
   const old = existingIndex >= 0 ? records[existingIndex] : {};
-  const newMemoValue = document.getElementById("memo").value;
 
   const data={
     ...old,
-    key:key,date:key,lastUpdated:nowText(),
+    key:key,
+    date:key,
+    lastUpdated:nowText(),
     sleep:document.getElementById("sleep").value,
     sleepHours:document.getElementById("sleepHours").value,
     sleepMinutes:document.getElementById("sleepMinutes").value,
     sleepTotal:sleepTotalText(),
     aggression:document.getElementById("aggression").value,
     selfharm:document.getElementById("selfharm").value,
+    mealAmount:document.getElementById("mealAmount").value,
     condition:getCheckedList(conditionMap),
     medicine:getCheckedList(medMap),
-    memo:(newMemoValue || old.memo || "")
+    memo:getMemoContent(),
+    growthMemo:document.getElementById("growthMemo").value,
+    chatDoctorMemo:getChatDoctorContent()
   };
-  if(existingIndex>=0)records[existingIndex]=data; else records.unshift(data);
-  records.sort((a,b)=>b.key.localeCompare(a.key));
+
+  if(existingIndex>=0) records[existingIndex]=data;
+  else records.unshift(data);
+
+  records.sort((a,b)=>getRecordKey(b).localeCompare(getRecordKey(a)));
   await setRecords(records);
+
+  currentEditKey = key;
   document.getElementById("saved").style.display="block";
-  document.getElementById("saved").innerText="Firebase 공유 저장 완료";
+  document.getElementById("saved").innerText="저장/수정 완료";
+  document.getElementById("dateInfo").innerHTML="<b>"+key+" 기록 있음</b><br>내용 수정 후 저장 가능합니다.";
+
   await loadRecords();
-autoResizeMemo();
+  fillForm(data);
+  autoResizeMemo();
 }
 
 
 
+
+
+function sanitizeSimpleEditorHtml(html){
+  const box = document.createElement("div");
+  box.innerHTML = String(html || "");
+
+  const allowedTags = new Set(["B","STRONG","U","BR","DIV","SPAN","FONT"]);
+
+  function normalizeColor(value){
+    value = String(value || "").trim().toLowerCase().replace(/\s+/g, "");
+    if(value === "#d90000" || value === "red" || value === "rgb(217,0,0)") return "#d90000";
+    if(value === "#222222" || value === "#222" || value === "black" || value === "rgb(34,34,34)") return "#222222";
+    return "";
+  }
+
+  function cleanNode(node){
+    [...node.children].forEach(child => cleanNode(child));
+    if(node.nodeType !== 1) return;
+
+    if(!allowedTags.has(node.tagName)){
+      const span = document.createElement("span");
+      span.textContent = node.textContent || "";
+      node.replaceWith(span);
+      return;
+    }
+
+    let color = "";
+    if(node.tagName === "FONT"){
+      color = normalizeColor(node.getAttribute("color"));
+    }
+
+    const style = node.getAttribute("style") || "";
+    const colorMatch = style.match(/color\s*:\s*([^;]+)/i);
+    if(colorMatch){
+      color = normalizeColor(colorMatch[1]);
+    }
+
+    const hasUnderline = /text-decoration[^;]*underline/i.test(style);
+    const hasBold = /font-weight\s*:\s*(bold|700|800|900)/i.test(style);
+
+    [...node.attributes].forEach(attr => node.removeAttribute(attr.name));
+
+    if(color) node.style.color = color;
+    if(hasUnderline) node.style.textDecoration = "underline";
+    if(hasBold) node.style.fontWeight = "700";
+  }
+
+  cleanNode(box);
+  return box.innerHTML;
+}
+
+function escapeHtml(text){
+  return String(text || "")
+    .replaceAll("&","&amp;")
+    .replaceAll("<","&lt;")
+    .replaceAll(">","&gt;")
+    .replaceAll('"',"&quot;")
+    .replaceAll("'","&#039;");
+}
 
 function getKoreanWeekday(dateStr){
   const days = ["일","월","화","수","목","금","토"];
@@ -427,8 +698,8 @@ function levelDot(value){
 
   if(value.includes("없음")) cls = "dotNone";
   else if(value.includes("좋음") || value.includes("안정적임")) cls = "dotGood";
-  else if(value.includes("보통") || value.includes("약함") || value.includes("피로함") || value.includes("졸림")) cls = "dotNormal";
-  else if(value.includes("조금") || value.includes("중간") || value.includes("귀") || value.includes("허벅지") || value.includes("불안함") || value.includes("기다림") || value.includes("울음") || value.includes("특이행동")) cls = "dotMild";
+  else if(value.includes("보통") || value.includes("약함") || value.includes("조절하려함") || value.includes("피곤함/졸림")) cls = "dotNormal";
+  else if(value.includes("조금") || value.includes("중간") || value.includes("귀") || value.includes("허벅지") || value.includes("불안함") || value.includes("기다림") || value.includes("울음") || value.includes("텐트럼")) cls = "dotMild";
   else if(value.includes("나쁨") || value.includes("심함") || value.includes("멍") || value.includes("상처")) cls = "dotBad";
 
   return `<span class="colorDot ${cls}"></span>`;
@@ -439,22 +710,67 @@ function conditionDots(list){
   return list.map(v => `${levelDot(v)}${v}`).join(", ");
 }
 
-window.loadRecords = async function(){
+let recordDisplayCount = 10;
+
+window.loadRecords = async function(resetCount=true){
   const records=await getRecords();
-  if(records.length===0){document.getElementById("records").innerHTML="기록 없음";return}
-  document.getElementById("records").innerHTML=records.map(r=>`
-    <div class="record" onclick="editRecord('${r.key}')">
-      <div class="recordDate">📅 ${r.date} (${getKoreanWeekday(r.date)})</div>
-      🌙 수면: ${levelDot(r.sleep)}${r.sleep} / 🕒 총수면시간: ${r.sleepTotal||"-"}<br>
-      👦 공격성: ${levelDot(r.aggression)}${cleanAggression(r.aggression)} / 😣 자해: ${levelDot(r.selfharm)}${r.selfharm}<br>
-      🌿 컨디션: ${(r.condition||[]).join(", ")||"-"}<br>
-      💊 복용약: ${(r.medicine||[]).join(", ")||"-"}<br>
+  const box=document.getElementById("records");
+  if(resetCount) recordDisplayCount = 10;
+  if(records.length===0){box.innerHTML="기록 없음";return}
+
+  records.sort((a,b)=>getRecordKey(b).localeCompare(getRecordKey(a)));
+  const visibleRecords = records.slice(0, recordDisplayCount);
+
+  box.innerHTML=visibleRecords.map((r,idx)=>{
+    const k=getRecordKey(r);
+    return `
+    <div class="record" data-key="${k}" data-index="${idx}">
+      <div class="recordDate">📅 ${k} (${getKoreanWeekday(k)})</div>
+      <b>🌙 수면:</b> ${levelDot(r.sleep)}${r.sleep||"-"} &nbsp;&nbsp; <b>🕒 총수면:</b> ${r.sleepTotal||"-"}<br>
+      <b>👦 공격성:</b> ${levelDot(r.aggression)}${cleanAggression(r.aggression)} &nbsp;&nbsp; <b>😣 자해:</b> ${levelDot(r.selfharm)}${r.selfharm||"-"} &nbsp;&nbsp; <b>🍚 식사량:</b> ${r.mealAmount||"-"}<br>
+      <b>🌿 컨디션:</b> ${(r.condition||[]).join(", ")||"-"}<br>
+      <b>💊 복용약:</b> ${normalizeMedicineList(r.medicine||[]).join(", ")||"-"}<br>
       <div class="recordMemo">${r.memo||"-"}</div>
-    </div>
-  `).join("");
+      ${r.growthMemo ? `<div style="background:#D0F0F8;border-radius:10px;padding:6px 8px;margin-top:6px;font-weight:700">🌳 성장 메모: ${String(r.growthMemo||"").replace(/\n/g,"<br>")}</div>` : ""}
+      ${r.chatDoctorMemo ? `<button type="button" class="chatDoctorToggle" onclick="event.stopPropagation(); toggleChatDoctor(this);">💬 CHAT DOCTOR 보기</button><div class="chatDoctorContent">${sanitizeSimpleEditorHtml(r.chatDoctorMemo)}</div>` : ""}
+    </div>`;
+  }).join("");
+
+  if(records.length > recordDisplayCount){
+    box.innerHTML += `
+    <div class="recordCountInfo">최근 ${recordDisplayCount}개 / 전체 ${records.length}개 기록 표시 중</div>
+    <div class="recordActionRow">
+      <button type="button" class="recordActionBtn" onclick="event.stopPropagation(); loadMoreRecords();">＋ 기록 더보기</button>
+      <button type="button" class="recordActionBtn" onclick="event.stopPropagation(); scrollToTopArea();">↑ 맨위로</button>
+    </div>`;
+  }else{
+    box.innerHTML += `
+    <div class="recordCountInfo">전체 ${records.length}개 기록 표시 중</div>
+    <div class="recordActionRow">
+      <button type="button" class="recordActionBtn" onclick="event.stopPropagation(); scrollToTopArea();">↑ 맨위로</button>
+    </div>`;
+  }
+
+  document.querySelectorAll(".record[data-key]").forEach(el=>{
+    el.addEventListener("click", function(){
+      window.editRecord(this.getAttribute("data-key"));
+    });
+  });
+}
+
+window.loadMoreRecords = function(){
+  recordDisplayCount += 10;
+  window.loadRecords(false);
+}
+
+window.scrollToTopArea = function(){
+  const topTarget = document.querySelector("h1") || document.body;
+  topTarget.scrollIntoView({behavior:"smooth", block:"start"});
 }
 
 window.editRecord = async function(key){
+  key = normalizeDateKey(key);
+  currentEditKey = key;
   document.getElementById("recordDate").value=key;
   await loadSelectedDate();
   window.scrollTo({top:0,behavior:"smooth"});
@@ -464,8 +780,8 @@ window.editRecord = async function(key){
 function autoResizeMemo(){
   const memo = document.getElementById("memo");
   if(!memo) return;
-  memo.style.height = "auto";
-  memo.style.height = memo.scrollHeight + "px";
+  memo.style.height = "190px";
+  memo.style.overflowY = "auto";
 }
 
 window.resetForNewDate = function(){
@@ -500,5 +816,40 @@ await loadSelectedDate();
 await loadRecords();
 autoResizeMemo();
 </script>
+
+<script>
+document.addEventListener("DOMContentLoaded", function(){
+
+  const originalSave = window.saveRecord;
+
+  if(typeof originalSave === "function"){
+    window.saveRecord = async function(){
+
+      // 현재 select 상태 강제 반영
+      document.querySelectorAll("select").forEach(sel=>{
+        sel.dispatchEvent(new Event("change",{bubbles:true}));
+      });
+
+      // checkbox 상태 강제 반영
+      document.querySelectorAll('input[type="checkbox"]').forEach(chk=>{
+        chk.dispatchEvent(new Event("change",{bubbles:true}));
+      });
+
+      return await originalSave.apply(this, arguments);
+    }
+  }
+});
+</script>
+
+
+<script>
+window.toggleChatDoctor = function(btn){
+  const box = btn.nextElementSibling;
+  if(!box) return;
+  box.classList.toggle("open");
+  btn.textContent = box.classList.contains("open") ? "💬 CHAT DOCTOR 닫기" : "💬 CHAT DOCTOR 보기";
+}
+</script>
+
 </body>
 </html>
