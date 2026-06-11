@@ -349,7 +349,6 @@ textarea#memo{background:#ffffff;border:1px solid #ddd;height:190px;min-height:1
 </div>
 
 
-<div id="saveInfo" style="display:none;background:#f7fbff;border:1px solid #cfe3ff;border-radius:14px;padding:12px;margin-bottom:10px;font-size:14px;line-height:1.6;"></div>
 <button onclick="saveSelectedDate()">선택한 날짜 기록 저장/수정</button>
 <div id="saved" class="notice" style="display:none"></div>
 </div>
@@ -585,31 +584,6 @@ window.saveSelectedDate = async function(){
   }
 
   const old = existingIndex >= 0 ? records[existingIndex] : {};
-
-  const memoCount=(document.getElementById("memo")?.innerText||"").trim().length;
-  const growthCount=(document.getElementById("growthMemo")?.value||"").trim().length;
-  const chatCount=(document.getElementById("chatDoctorMemo")?.innerText||"").trim().length;
-
-  const info=document.getElementById("saveInfo");
-  if(info && info.style.display!=="block"){
-    let warn="";
-    if((old.memo||"").length>50 && memoCount===0) warn+="⚠️ 일반 메모가 비어 있습니다.<br>";
-    if((old.growthMemo||"").length>10 && growthCount===0) warn+="⚠️ 성장 메모가 비어 있습니다.<br>";
-    if((old.chatDoctorMemo||"").length>10 && chatCount===0) warn+="⚠️ CHAT DOCTOR가 비어 있습니다.<br>";
-
-    info.innerHTML=
-      "<b>📋 저장 전 확인</b><br>"+
-      "📝 일반 메모: <b>"+memoCount+"자</b><br>"+
-      "🌳 성장 메모: <b>"+growthCount+"자</b><br>"+
-      "💬 CHAT DOCTOR: <b>"+chatCount+"자</b><br><br>"+
-      warn+
-      "한 번 더 저장 버튼을 누르면 저장됩니다.";
-    info.style.display="block";
-    info.scrollIntoView({behavior:"smooth",block:"center"});
-    return;
-  }
-
-  if(info) info.style.display="none";
 
   const data={
     ...old,
