@@ -242,12 +242,6 @@ textarea#memo{background:#ffffff;border:1px solid #ddd;height:190px;min-height:1
 }
 </style>
 
-
-<style>
-#autosaveStatus{
-font-size:12px;color:#777;text-align:right;margin-top:4px;
-}
-</style>
 </head>
 
 <body>
@@ -337,7 +331,7 @@ font-size:12px;color:#777;text-align:right;margin-top:4px;
 
 <label>🌳 성장 메모</label>
 <div class="growthMemoBox">
-<textarea id="growthMemo" rows="1" placeholder="오늘 시엘이의 작은 성장 한 줄"></textarea><div id='autosaveStatus'>임시저장 대기중</div>
+<textarea id="growthMemo" rows="1" placeholder="오늘 시엘이의 작은 성장 한 줄"></textarea>
 
 <div class="chatDoctorBox">
   <label><b>💬 CHAT DOCTOR</b></label>
@@ -356,6 +350,7 @@ font-size:12px;color:#777;text-align:right;margin-top:4px;
 
 
 <button onclick="saveSelectedDate()">선택한 날짜 기록 저장/수정</button>
+<div style="font-size:12px;color:#777;text-align:center;margin-top:5px;">저장 전 메모 글자 수를 확인합니다.</div>
 <div id="saved" class="notice" style="display:none"></div>
 </div>
 
@@ -577,19 +572,61 @@ function sleepTotalText(){
   return `${h||0}시간 ${m||0}분`;
 }
 
-window.saveSelectedDate = async function(){
-  try{
-    let records=await getRecords();
-    const key=document.getElementById("recordDate").value;
-    const oldRec=records.find(r=>r.key===key);
-    const memoVal=document.getElementById("memo")?.value||"";
-    if(oldRec && (oldRec.memo||"").length>50 && memoVal.trim()===""){
-      if(!confirm("기존 메모가 있는데 현재 메모칸이 비어 있습니다. 저장하면 기존 메모가 사라질 수 있습니다. 계속 저장할까요?")){
-        return;
-      }
-    }
-  }catch(e){}
 
+function plainTextFromHtml(html){
+  const box = document.createElement("div");
+  box.innerHTML = String(html || "");
+  return (box.innerText || box.textContent || "").trim();
+}
+
+function textCount(value){
+  return String(value || "").replace(/\s+/g, "").length;
+}
+
+function buildSaveCheckMessage(key, old, values){
+  const memoText = plainTextFromHtml(values.memo);
+  const chatText = plainTextFromHtml(values.chatDoctorMemo);
+  const growthText = String(values.growthMemo || "").trim();
+
+  const memoCount = textCount(memoText);
+  const growthCount = textCount(growthText);
+  const chatCount = textCount(chatText);
+
+  const oldMemoCount = textCount(plainTextFromHtml(old.memo || ""));
+  const oldGrowthCount = textCount(old.growthMemo || "");
+  const oldChatCount = textCount(plainTextFromHtml(old.chatDoctorMemo || ""));
+
+  let warnings = [];
+
+  if(oldMemoCount > 30 && memoCount === 0){
+    warnings.push("⚠️ 기존 일반 메모가 있는데 현재 일반 메모가 0자입니다.");
+  }
+  if(oldGrowthCount > 10 && growthCount === 0){
+    warnings.push("⚠️ 기존 성장 메모가 있는데 현재 성장 메모가 0자입니다.");
+  }
+  if(oldChatCount > 10 && chatCount === 0){
+    warnings.push("⚠️ 기존 CHAT DOCTOR가 있는데 현재 CHAT DOCTOR가 0자입니다.");
+  }
+  if(oldMemoCount > 100 && memoCount > 0 && memoCount < oldMemoCount * 0.4){
+    warnings.push("⚠️ 일반 메모 글자 수가 기존보다 많이 줄었습니다.");
+  }
+
+  return [
+    "저장 전 확인",
+    "",
+    "날짜: " + key,
+    "",
+    "📝 일반 메모: " + memoCount + "자",
+    "🌳 성장 메모: " + growthCount + "자",
+    "💬 CHAT DOCTOR: " + chatCount + "자",
+    "",
+    warnings.length ? warnings.join("\n") + "\n" : "",
+    "이 내용으로 저장할까요?"
+  ].join("\n");
+}
+
+
+window.saveSelectedDate = async function(){
   const key=normalizeDateKey(document.getElementById("recordDate").value);
   if(!key){alert("날짜 선택");return}
 
@@ -602,6 +639,17 @@ window.saveSelectedDate = async function(){
   }
 
   const old = existingIndex >= 0 ? records[existingIndex] : {};
+
+  const saveValues = {
+    memo:getMemoContent(),
+    growthMemo:document.getElementById("growthMemo").value,
+    chatDoctorMemo:getChatDoctorContent()
+  };
+
+  const checkMessage = buildSaveCheckMessage(key, old, saveValues);
+  if(!confirm(checkMessage)){
+    return;
+  }
 
   const data={
     ...old,
@@ -617,9 +665,9 @@ window.saveSelectedDate = async function(){
     mealAmount:document.getElementById("mealAmount").value,
     condition:getCheckedList(conditionMap),
     medicine:getCheckedList(medMap),
-    memo:getMemoContent(),
-    growthMemo:document.getElementById("growthMemo").value,
-    chatDoctorMemo:getChatDoctorContent()
+    memo:saveValues.memo,
+    growthMemo:saveValues.growthMemo,
+    chatDoctorMemo:saveValues.chatDoctorMemo
   };
 
   if(existingIndex>=0) records[existingIndex]=data;
@@ -833,48 +881,6 @@ document.getElementById("recordDate").value=todayKey();
 await loadSelectedDate();
 await loadRecords();
 autoResizeMemo();
-
-let autosaveTimer=null;
-
-function saveDraftLocal(){
- try{
-   const draft={
-     memo:document.getElementById('memo')?.value||'',
-     growthMemo:document.getElementById('growthMemo')?.value||'',
-     chatDoctorMemo:(typeof getChatDoctorContent==='function'?getChatDoctorContent():'')
-   };
-   localStorage.setItem('siel_draft_backup',JSON.stringify(draft));
-   const el=document.getElementById('autosaveStatus');
-   if(el) el.innerText='임시저장됨 '+new Date().toLocaleTimeString('ko-KR');
- }catch(e){}
-}
-
-function setupDraftAutosave(){
- ['memo','growthMemo'].forEach(id=>{
-   const el=document.getElementById(id);
-   if(el){
-     el.addEventListener('input',()=>{
-       clearTimeout(autosaveTimer);
-       autosaveTimer=setTimeout(saveDraftLocal,2000);
-     });
-   }
- });
-}
-
-function restoreDraftPrompt(){
- try{
-   const raw=localStorage.getItem('siel_draft_backup');
-   if(!raw) return;
-   const d=JSON.parse(raw);
-   if(!(d.memo||d.growthMemo||d.chatDoctorMemo)) return;
-   if(confirm('임시저장된 메모를 복원할까요?')){
-      if(document.getElementById('memo') && !document.getElementById('memo').value) document.getElementById('memo').value=d.memo||'';
-      if(document.getElementById('growthMemo') && !document.getElementById('growthMemo').value) document.getElementById('growthMemo').value=d.growthMemo||'';
-   }
- }catch(e){}
-}
-
-restoreDraftPrompt();setupDraftAutosave();
 </script>
 
 <script>
@@ -899,48 +905,6 @@ document.addEventListener("DOMContentLoaded", function(){
     }
   }
 });
-
-let autosaveTimer=null;
-
-function saveDraftLocal(){
- try{
-   const draft={
-     memo:document.getElementById('memo')?.value||'',
-     growthMemo:document.getElementById('growthMemo')?.value||'',
-     chatDoctorMemo:(typeof getChatDoctorContent==='function'?getChatDoctorContent():'')
-   };
-   localStorage.setItem('siel_draft_backup',JSON.stringify(draft));
-   const el=document.getElementById('autosaveStatus');
-   if(el) el.innerText='임시저장됨 '+new Date().toLocaleTimeString('ko-KR');
- }catch(e){}
-}
-
-function setupDraftAutosave(){
- ['memo','growthMemo'].forEach(id=>{
-   const el=document.getElementById(id);
-   if(el){
-     el.addEventListener('input',()=>{
-       clearTimeout(autosaveTimer);
-       autosaveTimer=setTimeout(saveDraftLocal,2000);
-     });
-   }
- });
-}
-
-function restoreDraftPrompt(){
- try{
-   const raw=localStorage.getItem('siel_draft_backup');
-   if(!raw) return;
-   const d=JSON.parse(raw);
-   if(!(d.memo||d.growthMemo||d.chatDoctorMemo)) return;
-   if(confirm('임시저장된 메모를 복원할까요?')){
-      if(document.getElementById('memo') && !document.getElementById('memo').value) document.getElementById('memo').value=d.memo||'';
-      if(document.getElementById('growthMemo') && !document.getElementById('growthMemo').value) document.getElementById('growthMemo').value=d.growthMemo||'';
-   }
- }catch(e){}
-}
-
-restoreDraftPrompt();setupDraftAutosave();
 </script>
 
 
@@ -951,48 +915,6 @@ window.toggleChatDoctor = function(btn){
   box.classList.toggle("open");
   btn.textContent = box.classList.contains("open") ? "💬 CHAT DOCTOR 닫기" : "💬 CHAT DOCTOR 보기";
 }
-
-let autosaveTimer=null;
-
-function saveDraftLocal(){
- try{
-   const draft={
-     memo:document.getElementById('memo')?.value||'',
-     growthMemo:document.getElementById('growthMemo')?.value||'',
-     chatDoctorMemo:(typeof getChatDoctorContent==='function'?getChatDoctorContent():'')
-   };
-   localStorage.setItem('siel_draft_backup',JSON.stringify(draft));
-   const el=document.getElementById('autosaveStatus');
-   if(el) el.innerText='임시저장됨 '+new Date().toLocaleTimeString('ko-KR');
- }catch(e){}
-}
-
-function setupDraftAutosave(){
- ['memo','growthMemo'].forEach(id=>{
-   const el=document.getElementById(id);
-   if(el){
-     el.addEventListener('input',()=>{
-       clearTimeout(autosaveTimer);
-       autosaveTimer=setTimeout(saveDraftLocal,2000);
-     });
-   }
- });
-}
-
-function restoreDraftPrompt(){
- try{
-   const raw=localStorage.getItem('siel_draft_backup');
-   if(!raw) return;
-   const d=JSON.parse(raw);
-   if(!(d.memo||d.growthMemo||d.chatDoctorMemo)) return;
-   if(confirm('임시저장된 메모를 복원할까요?')){
-      if(document.getElementById('memo') && !document.getElementById('memo').value) document.getElementById('memo').value=d.memo||'';
-      if(document.getElementById('growthMemo') && !document.getElementById('growthMemo').value) document.getElementById('growthMemo').value=d.growthMemo||'';
-   }
- }catch(e){}
-}
-
-restoreDraftPrompt();setupDraftAutosave();
 </script>
 
 </body>
