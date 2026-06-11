@@ -350,7 +350,6 @@ textarea#memo{background:#ffffff;border:1px solid #ddd;height:190px;min-height:1
 
 
 <button onclick="saveSelectedDate()">선택한 날짜 기록 저장/수정</button>
-<div style="font-size:12px;color:#777;text-align:center;margin-top:5px;">저장 전 메모 글자 수를 확인합니다.</div>
 <div id="saved" class="notice" style="display:none"></div>
 </div>
 
@@ -572,60 +571,6 @@ function sleepTotalText(){
   return `${h||0}시간 ${m||0}분`;
 }
 
-
-function plainTextFromHtml(html){
-  const box = document.createElement("div");
-  box.innerHTML = String(html || "");
-  return (box.innerText || box.textContent || "").trim();
-}
-
-function textCount(value){
-  return String(value || "").replace(/\s+/g, "").length;
-}
-
-function buildSaveCheckMessage(key, old, values){
-  const memoText = plainTextFromHtml(values.memo);
-  const chatText = plainTextFromHtml(values.chatDoctorMemo);
-  const growthText = String(values.growthMemo || "").trim();
-
-  const memoCount = textCount(memoText);
-  const growthCount = textCount(growthText);
-  const chatCount = textCount(chatText);
-
-  const oldMemoCount = textCount(plainTextFromHtml(old.memo || ""));
-  const oldGrowthCount = textCount(old.growthMemo || "");
-  const oldChatCount = textCount(plainTextFromHtml(old.chatDoctorMemo || ""));
-
-  let warnings = [];
-
-  if(oldMemoCount > 30 && memoCount === 0){
-    warnings.push("⚠️ 기존 일반 메모가 있는데 현재 일반 메모가 0자입니다.");
-  }
-  if(oldGrowthCount > 10 && growthCount === 0){
-    warnings.push("⚠️ 기존 성장 메모가 있는데 현재 성장 메모가 0자입니다.");
-  }
-  if(oldChatCount > 10 && chatCount === 0){
-    warnings.push("⚠️ 기존 CHAT DOCTOR가 있는데 현재 CHAT DOCTOR가 0자입니다.");
-  }
-  if(oldMemoCount > 100 && memoCount > 0 && memoCount < oldMemoCount * 0.4){
-    warnings.push("⚠️ 일반 메모 글자 수가 기존보다 많이 줄었습니다.");
-  }
-
-  return [
-    "저장 전 확인",
-    "",
-    "날짜: " + key,
-    "",
-    "📝 일반 메모: " + memoCount + "자",
-    "🌳 성장 메모: " + growthCount + "자",
-    "💬 CHAT DOCTOR: " + chatCount + "자",
-    "",
-    warnings.length ? warnings.join("\n") + "\n" : "",
-    "이 내용으로 저장할까요?"
-  ].join("\n");
-}
-
-
 window.saveSelectedDate = async function(){
   const key=normalizeDateKey(document.getElementById("recordDate").value);
   if(!key){alert("날짜 선택");return}
@@ -639,17 +584,6 @@ window.saveSelectedDate = async function(){
   }
 
   const old = existingIndex >= 0 ? records[existingIndex] : {};
-
-  const saveValues = {
-    memo:getMemoContent(),
-    growthMemo:document.getElementById("growthMemo").value,
-    chatDoctorMemo:getChatDoctorContent()
-  };
-
-  const checkMessage = buildSaveCheckMessage(key, old, saveValues);
-  if(!confirm(checkMessage)){
-    return;
-  }
 
   const data={
     ...old,
@@ -665,9 +599,9 @@ window.saveSelectedDate = async function(){
     mealAmount:document.getElementById("mealAmount").value,
     condition:getCheckedList(conditionMap),
     medicine:getCheckedList(medMap),
-    memo:saveValues.memo,
-    growthMemo:saveValues.growthMemo,
-    chatDoctorMemo:saveValues.chatDoctorMemo
+    memo:getMemoContent(),
+    growthMemo:document.getElementById("growthMemo").value,
+    chatDoctorMemo:getChatDoctorContent()
   };
 
   if(existingIndex>=0) records[existingIndex]=data;
