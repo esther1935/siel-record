@@ -242,6 +242,12 @@ textarea#memo{background:#ffffff;border:1px solid #ddd;height:190px;min-height:1
 }
 </style>
 
+
+<style>
+#autosaveStatus{
+font-size:12px;color:#777;text-align:right;margin-top:4px;
+}
+</style>
 </head>
 
 <body>
@@ -331,7 +337,7 @@ textarea#memo{background:#ffffff;border:1px solid #ddd;height:190px;min-height:1
 
 <label>🌳 성장 메모</label>
 <div class="growthMemoBox">
-<textarea id="growthMemo" rows="1" placeholder="오늘 시엘이의 작은 성장 한 줄"></textarea>
+<textarea id="growthMemo" rows="1" placeholder="오늘 시엘이의 작은 성장 한 줄"></textarea><div id='autosaveStatus'>임시저장 대기중</div>
 
 <div class="chatDoctorBox">
   <label><b>💬 CHAT DOCTOR</b></label>
@@ -572,6 +578,18 @@ function sleepTotalText(){
 }
 
 window.saveSelectedDate = async function(){
+  try{
+    let records=await getRecords();
+    const key=document.getElementById("recordDate").value;
+    const oldRec=records.find(r=>r.key===key);
+    const memoVal=document.getElementById("memo")?.value||"";
+    if(oldRec && (oldRec.memo||"").length>50 && memoVal.trim()===""){
+      if(!confirm("기존 메모가 있는데 현재 메모칸이 비어 있습니다. 저장하면 기존 메모가 사라질 수 있습니다. 계속 저장할까요?")){
+        return;
+      }
+    }
+  }catch(e){}
+
   const key=normalizeDateKey(document.getElementById("recordDate").value);
   if(!key){alert("날짜 선택");return}
 
@@ -815,6 +833,48 @@ document.getElementById("recordDate").value=todayKey();
 await loadSelectedDate();
 await loadRecords();
 autoResizeMemo();
+
+let autosaveTimer=null;
+
+function saveDraftLocal(){
+ try{
+   const draft={
+     memo:document.getElementById('memo')?.value||'',
+     growthMemo:document.getElementById('growthMemo')?.value||'',
+     chatDoctorMemo:(typeof getChatDoctorContent==='function'?getChatDoctorContent():'')
+   };
+   localStorage.setItem('siel_draft_backup',JSON.stringify(draft));
+   const el=document.getElementById('autosaveStatus');
+   if(el) el.innerText='임시저장됨 '+new Date().toLocaleTimeString('ko-KR');
+ }catch(e){}
+}
+
+function setupDraftAutosave(){
+ ['memo','growthMemo'].forEach(id=>{
+   const el=document.getElementById(id);
+   if(el){
+     el.addEventListener('input',()=>{
+       clearTimeout(autosaveTimer);
+       autosaveTimer=setTimeout(saveDraftLocal,2000);
+     });
+   }
+ });
+}
+
+function restoreDraftPrompt(){
+ try{
+   const raw=localStorage.getItem('siel_draft_backup');
+   if(!raw) return;
+   const d=JSON.parse(raw);
+   if(!(d.memo||d.growthMemo||d.chatDoctorMemo)) return;
+   if(confirm('임시저장된 메모를 복원할까요?')){
+      if(document.getElementById('memo') && !document.getElementById('memo').value) document.getElementById('memo').value=d.memo||'';
+      if(document.getElementById('growthMemo') && !document.getElementById('growthMemo').value) document.getElementById('growthMemo').value=d.growthMemo||'';
+   }
+ }catch(e){}
+}
+
+restoreDraftPrompt();setupDraftAutosave();
 </script>
 
 <script>
@@ -839,6 +899,48 @@ document.addEventListener("DOMContentLoaded", function(){
     }
   }
 });
+
+let autosaveTimer=null;
+
+function saveDraftLocal(){
+ try{
+   const draft={
+     memo:document.getElementById('memo')?.value||'',
+     growthMemo:document.getElementById('growthMemo')?.value||'',
+     chatDoctorMemo:(typeof getChatDoctorContent==='function'?getChatDoctorContent():'')
+   };
+   localStorage.setItem('siel_draft_backup',JSON.stringify(draft));
+   const el=document.getElementById('autosaveStatus');
+   if(el) el.innerText='임시저장됨 '+new Date().toLocaleTimeString('ko-KR');
+ }catch(e){}
+}
+
+function setupDraftAutosave(){
+ ['memo','growthMemo'].forEach(id=>{
+   const el=document.getElementById(id);
+   if(el){
+     el.addEventListener('input',()=>{
+       clearTimeout(autosaveTimer);
+       autosaveTimer=setTimeout(saveDraftLocal,2000);
+     });
+   }
+ });
+}
+
+function restoreDraftPrompt(){
+ try{
+   const raw=localStorage.getItem('siel_draft_backup');
+   if(!raw) return;
+   const d=JSON.parse(raw);
+   if(!(d.memo||d.growthMemo||d.chatDoctorMemo)) return;
+   if(confirm('임시저장된 메모를 복원할까요?')){
+      if(document.getElementById('memo') && !document.getElementById('memo').value) document.getElementById('memo').value=d.memo||'';
+      if(document.getElementById('growthMemo') && !document.getElementById('growthMemo').value) document.getElementById('growthMemo').value=d.growthMemo||'';
+   }
+ }catch(e){}
+}
+
+restoreDraftPrompt();setupDraftAutosave();
 </script>
 
 
@@ -849,6 +951,48 @@ window.toggleChatDoctor = function(btn){
   box.classList.toggle("open");
   btn.textContent = box.classList.contains("open") ? "💬 CHAT DOCTOR 닫기" : "💬 CHAT DOCTOR 보기";
 }
+
+let autosaveTimer=null;
+
+function saveDraftLocal(){
+ try{
+   const draft={
+     memo:document.getElementById('memo')?.value||'',
+     growthMemo:document.getElementById('growthMemo')?.value||'',
+     chatDoctorMemo:(typeof getChatDoctorContent==='function'?getChatDoctorContent():'')
+   };
+   localStorage.setItem('siel_draft_backup',JSON.stringify(draft));
+   const el=document.getElementById('autosaveStatus');
+   if(el) el.innerText='임시저장됨 '+new Date().toLocaleTimeString('ko-KR');
+ }catch(e){}
+}
+
+function setupDraftAutosave(){
+ ['memo','growthMemo'].forEach(id=>{
+   const el=document.getElementById(id);
+   if(el){
+     el.addEventListener('input',()=>{
+       clearTimeout(autosaveTimer);
+       autosaveTimer=setTimeout(saveDraftLocal,2000);
+     });
+   }
+ });
+}
+
+function restoreDraftPrompt(){
+ try{
+   const raw=localStorage.getItem('siel_draft_backup');
+   if(!raw) return;
+   const d=JSON.parse(raw);
+   if(!(d.memo||d.growthMemo||d.chatDoctorMemo)) return;
+   if(confirm('임시저장된 메모를 복원할까요?')){
+      if(document.getElementById('memo') && !document.getElementById('memo').value) document.getElementById('memo').value=d.memo||'';
+      if(document.getElementById('growthMemo') && !document.getElementById('growthMemo').value) document.getElementById('growthMemo').value=d.growthMemo||'';
+   }
+ }catch(e){}
+}
+
+restoreDraftPrompt();setupDraftAutosave();
 </script>
 
 </body>
