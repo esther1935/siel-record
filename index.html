@@ -242,56 +242,6 @@ textarea#memo{background:#ffffff;border:1px solid #ddd;height:190px;min-height:1
 }
 </style>
 
-
-<style>
-.saveCheckCard{
-  display:none;
-  margin:12px 0 10px;
-  padding:14px;
-  border-radius:18px;
-  background:#f7fbff;
-  border:1px solid #cfe3ff;
-  color:#333;
-  font-size:14px;
-  line-height:1.65;
-}
-.saveCheckCard.show{display:block;}
-.saveCheckTitle{
-  font-weight:900;
-  color:#2450a4;
-  font-size:15px;
-  margin-bottom:8px;
-}
-.saveCheckRows{
-  background:#fff;
-  border-radius:14px;
-  padding:10px 12px;
-  margin:8px 0;
-}
-.saveCheckWarning{
-  color:#b00020;
-  font-weight:800;
-  margin-top:8px;
-  white-space:pre-line;
-}
-.saveCheckActions{
-  display:flex;
-  gap:8px;
-  margin-top:12px;
-}
-.saveCheckActions button{
-  flex:1;
-  padding:10px 8px;
-  border-radius:999px;
-  border:none;
-  font-size:14px;
-  font-weight:900;
-  box-shadow:none;
-}
-.saveCheckSave{background:#4f86e8;color:#fff;}
-.saveCheckCancel{background:#eee;color:#333;}
-</style>
-
 </head>
 
 <body>
@@ -400,9 +350,13 @@ textarea#memo{background:#ffffff;border:1px solid #ddd;height:190px;min-height:1
 
 
 
-<div id="saveCheckCard" class="saveCheckCard"></div>
-<button type="button" onclick="openSaveCheckCard()">선택한 날짜 기록 저장/수정</button>
+<div style="margin-bottom:8px;">
+  <button type="button" onclick="downloadBackupJson()" style="background:#eef7ff;color:#2450a4;border:1px solid #cfe3ff;">
+    📦 전체 기록 백업 다운로드
+  </button>
+</div>
 
+<button onclick="saveSelectedDate()">선택한 날짜 기록 저장/수정</button>
 <div id="saved" class="notice" style="display:none"></div>
 </div>
 
@@ -624,88 +578,7 @@ function sleepTotalText(){
   return `${h||0}시간 ${m||0}분`;
 }
 
-
-function plainTextForCheck(html){
-  const box = document.createElement("div");
-  box.innerHTML = String(html || "");
-  return (box.innerText || box.textContent || "").trim();
-}
-function countTextForCheck(value){
-  return String(value || "").replace(/\s+/g,"").length;
-}
-function currentSaveCounts(){
-  const memoHtml = typeof getMemoContent === "function" ? getMemoContent() : "";
-  const growth = document.getElementById("growthMemo") ? document.getElementById("growthMemo").value : "";
-  const chatHtml = typeof getChatDoctorContent === "function" ? getChatDoctorContent() : "";
-  return {
-    memo: countTextForCheck(plainTextForCheck(memoHtml)),
-    growth: countTextForCheck(growth),
-    chat: countTextForCheck(plainTextForCheck(chatHtml))
-  };
-}
-function oldSaveCounts(old){
-  old = old || {};
-  return {
-    memo: countTextForCheck(plainTextForCheck(old.memo || "")),
-    growth: countTextForCheck(old.growthMemo || ""),
-    chat: countTextForCheck(plainTextForCheck(old.chatDoctorMemo || ""))
-  };
-}
-
-window.closeSaveCheckCard = function(){
-  const card = document.getElementById("saveCheckCard");
-  if(card){
-    card.classList.remove("show");
-    card.innerHTML = "";
-  }
-}
-
-window.openSaveCheckCard = async function(){
-  const key = normalizeDateKey(document.getElementById("recordDate").value);
-  if(!key){ alert("날짜 선택"); return; }
-
-  const records = await getRecords();
-  let existingIndex = findRecordIndex(records, key);
-  if(existingIndex < 0 && typeof currentEditKey !== "undefined" && currentEditKey){
-    existingIndex = findRecordIndex(records, currentEditKey);
-  }
-  const old = existingIndex >= 0 ? records[existingIndex] : {};
-  const now = currentSaveCounts();
-  const before = oldSaveCounts(old);
-
-  const warnings = [];
-  if(before.memo > 30 && now.memo === 0) warnings.push("⚠️ 기존 일반 메모가 있는데 현재 일반 메모가 0자입니다.");
-  if(before.growth > 10 && now.growth === 0) warnings.push("⚠️ 기존 성장 메모가 있는데 현재 성장 메모가 0자입니다.");
-  if(before.chat > 10 && now.chat === 0) warnings.push("⚠️ 기존 CHAT DOCTOR가 있는데 현재 CHAT DOCTOR가 0자입니다.");
-  if(before.memo > 100 && now.memo > 0 && now.memo < before.memo * 0.4) warnings.push("⚠️ 일반 메모가 기존보다 많이 줄었습니다.");
-  if(before.chat > 100 && now.chat > 0 && now.chat < before.chat * 0.4) warnings.push("⚠️ CHAT DOCTOR가 기존보다 많이 줄었습니다.");
-
-  const card = document.getElementById("saveCheckCard");
-  if(!card){
-    await window.actualSaveSelectedDate();
-    return;
-  }
-
-  card.innerHTML = `
-    <div class="saveCheckTitle">📋 저장 전 확인</div>
-    <div>날짜: <b>${key}</b></div>
-    <div class="saveCheckRows">
-      📝 일반 메모: <b>${now.memo}자</b><br>
-      🌳 성장 메모: <b>${now.growth}자</b><br>
-      💬 CHAT DOCTOR: <b>${now.chat}자</b>
-    </div>
-    ${warnings.length ? `<div class="saveCheckWarning">${warnings.join("<br>")}</div>` : `<div style="color:#557;font-weight:700;">현재 입력 내용을 확인한 뒤 저장해 주세요.</div>`}
-    <div class="saveCheckActions">
-      <button type="button" class="saveCheckSave" onclick="actualSaveSelectedDate()">저장하기</button>
-      <button type="button" class="saveCheckCancel" onclick="closeSaveCheckCard()">취소</button>
-    </div>
-  `;
-  card.classList.add("show");
-  card.scrollIntoView({behavior:"smooth", block:"center"});
-}
-
-
-window.actualSaveSelectedDate = async function(){
+window.saveSelectedDate = async function(){
   const key=normalizeDateKey(document.getElementById("recordDate").value);
   if(!key){alert("날짜 선택");return}
 
@@ -747,7 +620,6 @@ window.actualSaveSelectedDate = async function(){
   currentEditKey = key;
   document.getElementById("saved").style.display="block";
   document.getElementById("saved").innerText="저장/수정 완료";
-  closeSaveCheckCard();
   document.getElementById("dateInfo").innerHTML="<b>"+key+" 기록 있음</b><br>내용 수정 후 저장 가능합니다.";
 
   await loadRecords();
@@ -984,6 +856,43 @@ window.toggleChatDoctor = function(btn){
   box.classList.toggle("open");
   btn.textContent = box.classList.contains("open") ? "💬 CHAT DOCTOR 닫기" : "💬 CHAT DOCTOR 보기";
 }
+
+window.downloadBackupJson = async function(){
+  try{
+    const records = await getRecords();
+    const backup = {
+      exportedAt: new Date().toLocaleString("ko-KR"),
+      totalRecords: records.length,
+      records: records
+    };
+
+    const blob = new Blob(
+      [JSON.stringify(backup, null, 2)],
+      {type:"application/json;charset=utf-8"}
+    );
+
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    const d = new Date();
+    const y = d.getFullYear();
+    const m = String(d.getMonth()+1).padStart(2,"0");
+    const day = String(d.getDate()).padStart(2,"0");
+
+    a.href = url;
+    a.download = "siel_backup_" + y + "-" + m + "-" + day + ".json";
+
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+
+    alert("백업 완료\\n총 " + records.length + "개의 기록이 저장되었습니다.");
+  }catch(e){
+    console.error(e);
+    alert("백업 중 오류가 발생했습니다.");
+  }
+}
+
 </script>
 
 </body>
