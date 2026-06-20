@@ -439,6 +439,44 @@ async function getRecords(){
   }
 }
 
+
+window.downloadBackupJson = async function(){
+  try{
+    const records = await getRecords();
+
+    const backup = {
+      exportedAt: new Date().toLocaleString("ko-KR"),
+      totalRecords: records.length,
+      records: records
+    };
+
+    const jsonText = JSON.stringify(backup, null, 2);
+    const blob = new Blob([jsonText], {type:"application/json;charset=utf-8"});
+    const url = URL.createObjectURL(blob);
+
+    const d = new Date();
+    const y = d.getFullYear();
+    const m = String(d.getMonth()+1).padStart(2,"0");
+    const day = String(d.getDate()).padStart(2,"0");
+
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "siel_backup_" + y + "-" + m + "-" + day + ".json";
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+
+    alert("백업 완료\\n총 " + records.length + "개의 기록이 저장되었습니다.");
+  }catch(e){
+    console.error("backup error:", e);
+    alert("백업 중 오류가 발생했습니다.\\n" + (e && e.message ? e.message : e));
+  }
+}
+
+
+
 async function setRecords(records){
   await setDoc(cloudDoc, {records: records, updatedAt: nowText()});
 }
@@ -856,43 +894,6 @@ window.toggleChatDoctor = function(btn){
   box.classList.toggle("open");
   btn.textContent = box.classList.contains("open") ? "💬 CHAT DOCTOR 닫기" : "💬 CHAT DOCTOR 보기";
 }
-
-window.downloadBackupJson = async function(){
-  try{
-    const records = await getRecords();
-    const backup = {
-      exportedAt: new Date().toLocaleString("ko-KR"),
-      totalRecords: records.length,
-      records: records
-    };
-
-    const blob = new Blob(
-      [JSON.stringify(backup, null, 2)],
-      {type:"application/json;charset=utf-8"}
-    );
-
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    const d = new Date();
-    const y = d.getFullYear();
-    const m = String(d.getMonth()+1).padStart(2,"0");
-    const day = String(d.getDate()).padStart(2,"0");
-
-    a.href = url;
-    a.download = "siel_backup_" + y + "-" + m + "-" + day + ".json";
-
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    URL.revokeObjectURL(url);
-
-    alert("백업 완료\\n총 " + records.length + "개의 기록이 저장되었습니다.");
-  }catch(e){
-    console.error(e);
-    alert("백업 중 오류가 발생했습니다.");
-  }
-}
-
 </script>
 
 </body>
