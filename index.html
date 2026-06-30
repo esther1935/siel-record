@@ -242,6 +242,56 @@ textarea#memo{background:#ffffff;border:1px solid #ddd;height:190px;min-height:1
 }
 </style>
 
+
+<style>
+.saveCheckCard{
+  display:none;
+  margin:12px 0 10px;
+  padding:14px;
+  border-radius:18px;
+  background:#f7fbff;
+  border:1px solid #cfe3ff;
+  color:#333;
+  font-size:14px;
+  line-height:1.65;
+}
+.saveCheckCard.show{display:block;}
+.saveCheckTitle{
+  font-weight:900;
+  color:#2450a4;
+  font-size:15px;
+  margin-bottom:8px;
+}
+.saveCheckRows{
+  background:#fff;
+  border-radius:14px;
+  padding:10px 12px;
+  margin:8px 0;
+}
+.saveCheckWarning{
+  color:#b00020;
+  font-weight:800;
+  margin-top:8px;
+  white-space:pre-line;
+}
+.saveCheckActions{
+  display:flex;
+  gap:8px;
+  margin-top:12px;
+}
+.saveCheckActions button{
+  flex:1;
+  padding:10px 8px;
+  border-radius:999px;
+  border:none;
+  font-size:14px;
+  font-weight:900;
+  box-shadow:none;
+}
+.saveCheckSave{background:#4f86e8;color:#fff;}
+.saveCheckCancel{background:#eee;color:#333;}
+</style>
+
 </head>
 
 <body>
@@ -350,18 +400,14 @@ textarea#memo{background:#ffffff;border:1px solid #ddd;height:190px;min-height:1
 
 
 
-<div style="margin-bottom:8px; display:flex; gap:6px; flex-wrap:wrap; align-items:center;">
-  <button type="button" onclick="downloadBackupJson()" style="background:#eef7ff;color:#2450a4;border:1px solid #cfe3ff;">
-    📦 전체 기록 백업 다운로드
-  </button>
-  <button type="button" onclick="document.getElementById('restoreFile').click()" style="background:#fff7e6;color:#8a5a00;border:1px solid #ffd591;">
-    🔁 백업 파일 복원
-  </button>
-  <input id="restoreFile" type="file" accept="application/json,.json" style="display:none" onchange="restoreBackupJson(event)">
-</div>
-<div id="syncStatus" class="notice" style="display:none; background:#fff7e6; border-color:#ffd591; color:#7a4b00;"></div>
+<div id="saveCheckCard" class="saveCheckCard"></div>
 
-<button onclick="saveSelectedDate()">선택한 날짜 기록 저장/수정</button>
+<button type="button" class="recordActionBtn" style="background:#3aa76d" onclick="downloadBackup()">📦 전체 기록 백업 다운로드</button>
+<input type="file" id="restoreFileInput" accept="application/json" style="display:none" onchange="restoreBackupFile(event)">
+<button type="button" class="recordActionBtn" style="background:#d99a2b" onclick="document.getElementById('restoreFileInput').click()">🔁 백업 파일 복원</button>
+
+<button type="button" onclick="openSaveCheckCard()">선택한 날짜 기록 저장/수정</button>
+
 <div id="saved" class="notice" style="display:none"></div>
 </div>
 
@@ -374,7 +420,7 @@ textarea#memo{background:#ffffff;border:1px solid #ddd;height:190px;min-height:1
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { getFirestore, doc, setDoc, getDoc, getDocs, deleteDoc, collection } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyC9rJ7WYoyQjYNDXQYgqCmqLUFrMb0Mubk",
@@ -387,7 +433,11 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
-const cloudDoc = doc(db, "shared", "all_records");
+// 2026-06-30 수정: 기록 전체를 문서 1개(shared/all_records)에 통째로 저장하던 구조를 폐기.
+// 저장 1회 = 통째 덮어쓰기였기 때문에, 네트워크 오류나 동시 저장 충돌 시 전체 데이터가
+// 사라지는 사고가 발생했음. 이제부터는 "records" 컬렉션 안에 날짜별 문서를 따로 저장한다.
+// (예: records/2026-06-28) → 하루치 저장 실패가 다른 날짜 기록에 영향을 주지 않음.
+const recordsCol = collection(db, "records");
 
 function todayKey(){
   const d = new Date();
@@ -433,106 +483,42 @@ function findRecordIndex(records, key){
   return records.findIndex(r => getRecordKey(r) === nkey);
 }
 
-const LOCAL_CACHE_KEY = "siel_daily_records_v7_cache";
-const LOCAL_SAFETY_BACKUP_KEY = "siel_daily_records_v7_safety_backup";
-
-function showSyncStatus(message){
-  const el = document.getElementById("syncStatus");
-  if(!el) return;
-  if(message){
-    el.style.display = "block";
-    el.innerText = message;
-  }else{
-    el.style.display = "none";
-    el.innerText = "";
-  }
-}
-
-function normalizeRecord(r){
-  const key = getRecordKey(r);
-  return {
-    ...(r || {}),
-    key: key || (r && r.key) || "",
-    date: key || (r && r.date) || "",
-    medicine: normalizeMedicineList((r && r.medicine) || []),
-    condition: Array.isArray(r && r.condition) ? r.condition : [],
-    memo: (r && r.memo) || "",
-    growthMemo: (r && r.growthMemo) || "",
-    chatDoctorMemo: (r && r.chatDoctorMemo) || ""
-  };
-}
-
-function normalizeRecords(records){
-  const map = new Map();
-  (Array.isArray(records) ? records : []).forEach(r => {
-    const nr = normalizeRecord(r);
-    const key = getRecordKey(nr);
-    if(key) map.set(key, nr);
-  });
-  return Array.from(map.values()).sort((a,b)=>getRecordKey(b).localeCompare(getRecordKey(a)));
-}
-
-function readLocalRecords(){
-  try{
-    const raw = localStorage.getItem(LOCAL_CACHE_KEY) || localStorage.getItem("siel_daily_records_v7") || "[]";
-    return normalizeRecords(JSON.parse(raw));
-  }catch(e){
-    console.error("local cache read error", e);
-    return [];
-  }
-}
-
-function saveLocalRecords(records){
-  const normalized = normalizeRecords(records);
-  localStorage.setItem(LOCAL_CACHE_KEY, JSON.stringify(normalized));
-  localStorage.setItem("siel_daily_records_v7", JSON.stringify(normalized));
-}
-
+// 전체 기록을 불러온다. 실패하면 빈 배열을 주는 대신 에러를 그대로 던진다.
+// (예전 코드는 실패 시 []를 반환해서, 그 직후 저장하면 전체 데이터를 빈 배열로
+//  덮어써버리는 사고로 이어졌다. 이제는 실패를 호출한 쪽이 알고 저장을 막도록 한다.)
 async function getRecords(){
+  const snap = await getDocs(recordsCol);
+  const list = [];
+  snap.forEach(d => list.push(d.data()));
+  return list;
+}
+
+// 안전하게 불러오기를 시도하고, 실패하면 null을 반환 + 사용자에게 알림.
+// 저장/삭제 등 "쓰기" 동작 전에는 반드시 이 함수를 써서, 실패 시 그 자리에서 멈추게 한다.
+async function getRecordsSafe(){
   try{
-    const snap = await getDoc(cloudDoc);
-    const cloudRecords = snap.exists() ? normalizeRecords(snap.data().records || []) : [];
-    const localRecords = readLocalRecords();
-
-    // Firebase 문서가 비어 있어도, 기기에 남아 있는 기록이 있으면 화면에서 사라지지 않게 보호
-    if(cloudRecords.length === 0 && localRecords.length > 0){
-      showSyncStatus("Firebase 기록을 읽지 못했거나 비어 있어, 이 기기에 보관된 안전 복사본을 보여주고 있습니다. 백업 후 복원을 권장합니다.");
-      return localRecords;
-    }
-
-    saveLocalRecords(cloudRecords);
-    showSyncStatus("");
-    return cloudRecords;
+    return await getRecords();
   }catch(e){
-    console.error("Firebase read error", e);
-    const localRecords = readLocalRecords();
-    if(localRecords.length > 0){
-      showSyncStatus("Firebase 연결이 불안정하여, 이 기기에 보관된 안전 복사본을 보여주고 있습니다. 기록은 사라진 것이 아닐 수 있습니다.");
-      return localRecords;
-    }
-    showSyncStatus("Firebase 연결 오류입니다. 기록을 불러오지 못했습니다. 새 기록 저장 전 백업 파일 복원을 먼저 확인해 주세요.");
-    return [];
+    console.error(e);
+    alert("⚠️ 서버에서 기존 기록을 불러오지 못했습니다. 인터넷 연결을 확인한 뒤 다시 시도해주세요.\n(저장을 진행하지 않았습니다. 기존 기록은 안전합니다.)");
+    return null;
   }
 }
 
-async function setRecords(records, options={}){
-  const normalized = normalizeRecords(records);
-  if(normalized.length === 0 && !options.allowEmpty){
-    throw new Error("안전장치: 빈 기록으로 전체 데이터를 덮어쓰지 않았습니다.");
-  }
-
-  const before = readLocalRecords();
-  if(before.length > 0){
-    localStorage.setItem(LOCAL_SAFETY_BACKUP_KEY, JSON.stringify({savedAt: nowText(), records: before}));
-  }
-
-  await setDoc(cloudDoc, {records: normalized, updatedAt: nowText()});
-  saveLocalRecords(normalized);
-  showSyncStatus("");
+// 기록 1건만 해당 날짜 문서에 저장한다(병합). 절대 컬렉션 전체를 지우거나
+// 덮어쓰지 않으므로, 이 한 번의 저장이 다른 날짜 기록에 영향을 줄 수 없다.
+async function saveRecord(record){
+  const key = getRecordKey(record);
+  if(!key) throw new Error("invalid record key");
+  await setDoc(doc(recordsCol, key), record, {merge:true});
 }
 
-window.getRecords = getRecords;
-window.setRecords = setRecords;
+// 기록 1건 삭제
+async function deleteRecordByKey(key){
+  key = normalizeDateKey(key);
+  if(!key) return;
+  await deleteDoc(doc(recordsCol, key));
+}
 
 const medMap=[
 ["med_risperidone","리스페리돈"],["med_melatonin","멜라토닌"],["med_sleep","명세핀"],["med_otherdrug","기타약"],
@@ -646,12 +632,18 @@ document.getElementById("growthMemo").value=r.growthMemo||"";
 window.loadSelectedDate = async function(){
   const key=normalizeDateKey(document.getElementById("recordDate").value);
   currentEditKey = key;
-
-  const records=await getRecords();
-  const foundIndex=findRecordIndex(records,key);
-  const found=foundIndex>=0 ? records[foundIndex] : null;
   const el=document.getElementById("dateInfo");
   document.getElementById("saved").style.display="none";
+
+  let found = null;
+  try{
+    const snap = await getDoc(doc(recordsCol, key));
+    if(snap.exists()) found = snap.data();
+  }catch(e){
+    console.error(e);
+    el.innerHTML = "<b>⚠️ 불러오기 실패</b><br>인터넷 연결을 확인해주세요.";
+    return;
+  }
 
   if(found){
     fillForm(found);
@@ -669,19 +661,104 @@ function sleepTotalText(){
   return `${h||0}시간 ${m||0}분`;
 }
 
-window.saveSelectedDate = async function(){
+
+function plainTextForCheck(html){
+  const box = document.createElement("div");
+  box.innerHTML = String(html || "");
+  return (box.innerText || box.textContent || "").trim();
+}
+function countTextForCheck(value){
+  return String(value || "").replace(/\s+/g,"").length;
+}
+function currentSaveCounts(){
+  const memoHtml = typeof getMemoContent === "function" ? getMemoContent() : "";
+  const growth = document.getElementById("growthMemo") ? document.getElementById("growthMemo").value : "";
+  const chatHtml = typeof getChatDoctorContent === "function" ? getChatDoctorContent() : "";
+  return {
+    memo: countTextForCheck(plainTextForCheck(memoHtml)),
+    growth: countTextForCheck(growth),
+    chat: countTextForCheck(plainTextForCheck(chatHtml))
+  };
+}
+function oldSaveCounts(old){
+  old = old || {};
+  return {
+    memo: countTextForCheck(plainTextForCheck(old.memo || "")),
+    growth: countTextForCheck(old.growthMemo || ""),
+    chat: countTextForCheck(plainTextForCheck(old.chatDoctorMemo || ""))
+  };
+}
+
+window.closeSaveCheckCard = function(){
+  const card = document.getElementById("saveCheckCard");
+  if(card){
+    card.classList.remove("show");
+    card.innerHTML = "";
+  }
+}
+
+window.openSaveCheckCard = async function(){
+  const key = normalizeDateKey(document.getElementById("recordDate").value);
+  if(!key){ alert("날짜 선택"); return; }
+
+  let old = {};
+  try{
+    const snap = await getDoc(doc(recordsCol, key));
+    if(snap.exists()) old = snap.data();
+  }catch(e){
+    console.error(e);
+    alert("⚠️ 서버 연결에 실패했습니다. 인터넷 연결을 확인한 뒤 다시 시도해주세요.");
+    return;
+  }
+  const now = currentSaveCounts();
+  const before = oldSaveCounts(old);
+
+  const warnings = [];
+  if(before.memo > 30 && now.memo === 0) warnings.push("⚠️ 기존 일반 메모가 있는데 현재 일반 메모가 0자입니다.");
+  if(before.growth > 10 && now.growth === 0) warnings.push("⚠️ 기존 성장 메모가 있는데 현재 성장 메모가 0자입니다.");
+  if(before.chat > 10 && now.chat === 0) warnings.push("⚠️ 기존 CHAT DOCTOR가 있는데 현재 CHAT DOCTOR가 0자입니다.");
+  if(before.memo > 100 && now.memo > 0 && now.memo < before.memo * 0.4) warnings.push("⚠️ 일반 메모가 기존보다 많이 줄었습니다.");
+  if(before.chat > 100 && now.chat > 0 && now.chat < before.chat * 0.4) warnings.push("⚠️ CHAT DOCTOR가 기존보다 많이 줄었습니다.");
+
+  const card = document.getElementById("saveCheckCard");
+  if(!card){
+    await window.actualSaveSelectedDate();
+    return;
+  }
+
+  card.innerHTML = `
+    <div class="saveCheckTitle">📋 저장 전 확인</div>
+    <div>날짜: <b>${key}</b></div>
+    <div class="saveCheckRows">
+      📝 일반 메모: <b>${now.memo}자</b><br>
+      🌳 성장 메모: <b>${now.growth}자</b><br>
+      💬 CHAT DOCTOR: <b>${now.chat}자</b>
+    </div>
+    ${warnings.length ? `<div class="saveCheckWarning">${warnings.join("<br>")}</div>` : `<div style="color:#557;font-weight:700;">현재 입력 내용을 확인한 뒤 저장해 주세요.</div>`}
+    <div class="saveCheckActions">
+      <button type="button" class="saveCheckSave" onclick="actualSaveSelectedDate()">저장하기</button>
+      <button type="button" class="saveCheckCancel" onclick="closeSaveCheckCard()">취소</button>
+    </div>
+  `;
+  card.classList.add("show");
+  card.scrollIntoView({behavior:"smooth", block:"center"});
+}
+
+
+window.actualSaveSelectedDate = async function(){
   const key=normalizeDateKey(document.getElementById("recordDate").value);
   if(!key){alert("날짜 선택");return}
 
-  let records=await getRecords();
-
-  // 오늘 새로 저장한 기록도 같은 날짜면 반드시 수정 모드로 인식
-  let existingIndex=findRecordIndex(records,key);
-  if(existingIndex < 0 && currentEditKey){
-    existingIndex=findRecordIndex(records,currentEditKey);
+  // 기존 기록(이 날짜 한 건)만 불러와서 병합한다. 실패하면 저장을 중단한다.
+  let old = {};
+  try{
+    const snap = await getDoc(doc(recordsCol, key));
+    if(snap.exists()) old = snap.data();
+  }catch(e){
+    console.error(e);
+    alert("⚠️ 서버 연결에 실패해 저장을 중단했습니다. 인터넷 연결을 확인한 뒤 다시 시도해주세요.\n(기존 기록은 안전합니다.)");
+    return;
   }
-
-  const old = existingIndex >= 0 ? records[existingIndex] : {};
 
   const data={
     ...old,
@@ -702,15 +779,18 @@ window.saveSelectedDate = async function(){
     chatDoctorMemo:getChatDoctorContent()
   };
 
-  if(existingIndex>=0) records[existingIndex]=data;
-  else records.unshift(data);
-
-  records.sort((a,b)=>getRecordKey(b).localeCompare(getRecordKey(a)));
-  await setRecords(records);
+  try{
+    await saveRecord(data);
+  }catch(e){
+    console.error(e);
+    alert("⚠️ 저장에 실패했습니다. 인터넷 연결을 확인한 뒤 다시 시도해주세요.");
+    return;
+  }
 
   currentEditKey = key;
   document.getElementById("saved").style.display="block";
   document.getElementById("saved").innerText="저장/수정 완료";
+  closeSaveCheckCard();
   document.getElementById("dateInfo").innerHTML="<b>"+key+" 기록 있음</b><br>내용 수정 후 저장 가능합니다.";
 
   await loadRecords();
@@ -811,8 +891,9 @@ function conditionDots(list){
 let recordDisplayCount = 10;
 
 window.loadRecords = async function(resetCount=true){
-  const records=await getRecords();
   const box=document.getElementById("records");
+  const records = await getRecordsSafe();
+  if(records === null){ box.innerHTML = "⚠️ 기록을 불러오지 못했습니다. 새로고침 해주세요."; return; }
   if(resetCount) recordDisplayCount = 10;
   if(records.length===0){box.innerHTML="기록 없음";return}
 
@@ -888,7 +969,8 @@ window.resetForNewDate = function(){
 }
 
 window.downloadCSV = async function(){
-  const records=await getRecords();
+  const records=await getRecordsSafe();
+  if(records===null) return;
   if(records.length===0){alert("기록 없음");return}
   const header=["날짜","수면","총수면","공격성","자해","컨디션","복용약","메모"];
   const rows=records.map(r=>[r.date,r.sleep,r.sleepTotal,r.aggression,r.selfharm,(r.condition||[]).join(", "),(r.medicine||[]).join(", "),r.memo]);
@@ -900,49 +982,77 @@ window.downloadCSV = async function(){
   URL.revokeObjectURL(url);
 }
 
-window.clearAll = async function(){
-  if(confirm("전체 삭제할까요?")){
-    await setRecords([], {allowEmpty:true});
-    defaultForm();
-    await loadRecords();
-autoResizeMemo();
-  }
+// 전체 기록 백업(json) 다운로드. 기존 백업 파일과 동일한 형식
+// {exportedAt, totalRecords, records} 을 유지해서 호환되게 한다.
+window.downloadBackup = async function(){
+  const records = await getRecordsSafe();
+  if(records===null) return;
+  if(records.length===0){alert("백업할 기록이 없습니다.");return}
+  const backup = {
+    exportedAt: nowText(),
+    totalRecords: records.length,
+    records: records
+  };
+  const blob=new Blob([JSON.stringify(backup,null,2)],{type:"application/json;charset=utf-8;"});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement("a");
+  const stamp = todayKey();
+  a.href=url;a.download="siel_backup_"+stamp+".json";a.click();
+  URL.revokeObjectURL(url);
 }
 
-window.restoreBackupJson = async function(event){
-  const input = event.target;
-  const file = input && input.files && input.files[0];
+// 백업 파일(json)을 불러와 기록을 복원한다. 기존 컬렉션을 지우지 않고,
+// 백업 안의 각 날짜 기록을 1건씩 병합(upsert)한다. 따라서 복원 작업 자체가
+// 다른 날짜 기록을 지우는 일은 절대 없다(예전 통째 덮어쓰기 구조와의 가장 큰 차이).
+window.restoreBackupFile = function(event){
+  const file = event.target.files && event.target.files[0];
   if(!file) return;
-
-  try{
-    const text = await file.text();
-    const parsed = JSON.parse(text);
-    const importedRecords = normalizeRecords(Array.isArray(parsed) ? parsed : parsed.records);
-
-    if(importedRecords.length === 0){
-      alert("복원할 기록이 없는 파일입니다.");
+  const reader = new FileReader();
+  reader.onload = async function(e){
+    let parsed;
+    try{
+      parsed = JSON.parse(e.target.result);
+    }catch(err){
+      alert("백업 파일을 읽을 수 없습니다. 올바른 json 파일인지 확인해주세요.");
       return;
     }
+    const list = Array.isArray(parsed) ? parsed : (parsed.records || []);
+    if(!Array.isArray(list) || list.length===0){
+      alert("복원할 기록이 없습니다.");
+      return;
+    }
+    if(!confirm(`백업 파일 안의 기록 ${list.length}개를 복원할까요?\n(같은 날짜의 기존 기록은 백업 내용으로 덮어써집니다. 다른 날짜 기록은 그대로 유지됩니다.)`)) return;
 
-    const current = await getRecords();
-    const msg = "백업 파일에서 " + importedRecords.length + "개의 기록을 찾았습니다.\n\n확인을 누르면 같은 날짜 기록은 백업 파일 내용으로 교체하고, 기존 다른 날짜 기록은 보존합니다.";
-    if(!confirm(msg)) return;
-
-    const merged = new Map();
-    normalizeRecords(current).forEach(r => merged.set(getRecordKey(r), r));
-    importedRecords.forEach(r => merged.set(getRecordKey(r), r));
-
-    const finalRecords = normalizeRecords(Array.from(merged.values()));
-    await setRecords(finalRecords);
-    alert("복원 완료\n총 " + finalRecords.length + "개의 기록이 저장되었습니다.");
-    await loadSelectedDate();
+    let okCount = 0, failCount = 0;
+    for(const r of list){
+      try{
+        const key = getRecordKey(r);
+        if(!key){ failCount++; continue; }
+        await setDoc(doc(recordsCol, key), {...r, key, date:key}, {merge:true});
+        okCount++;
+      }catch(err){
+        console.error(err);
+        failCount++;
+      }
+    }
+    alert(`복원 완료: 성공 ${okCount}개${failCount? ", 실패 "+failCount+"개" : ""}`);
+    event.target.value = "";
     await loadRecords();
-  }catch(e){
-    console.error(e);
-    alert("복원 중 오류가 발생했습니다. JSON 백업 파일인지 확인해 주세요.");
-  }finally{
-    if(input) input.value = "";
+  };
+  reader.readAsText(file, "utf-8");
+}
+
+window.clearAll = async function(){
+  if(!confirm("정말 전체 삭제할까요? 이 작업은 되돌릴 수 없습니다.")) return;
+  const records = await getRecordsSafe();
+  if(records===null) return;
+  if(!confirm(`총 ${records.length}개의 기록이 모두 삭제됩니다. 계속할까요?`)) return;
+  for(const r of records){
+    try{ await deleteRecordByKey(getRecordKey(r)); }catch(e){ console.error(e); }
   }
+  defaultForm();
+  await loadRecords();
+  autoResizeMemo();
 }
 
 document.getElementById("recordDate").value=todayKey();
@@ -983,43 +1093,6 @@ window.toggleChatDoctor = function(btn){
   box.classList.toggle("open");
   btn.textContent = box.classList.contains("open") ? "💬 CHAT DOCTOR 닫기" : "💬 CHAT DOCTOR 보기";
 }
-
-window.downloadBackupJson = async function(){
-  try{
-    const records = await window.getRecords();
-    const backup = {
-      exportedAt: new Date().toLocaleString("ko-KR"),
-      totalRecords: records.length,
-      records: records
-    };
-
-    const blob = new Blob(
-      [JSON.stringify(backup, null, 2)],
-      {type:"application/json;charset=utf-8"}
-    );
-
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    const d = new Date();
-    const y = d.getFullYear();
-    const m = String(d.getMonth()+1).padStart(2,"0");
-    const day = String(d.getDate()).padStart(2,"0");
-
-    a.href = url;
-    a.download = "siel_backup_" + y + "-" + m + "-" + day + ".json";
-
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    URL.revokeObjectURL(url);
-
-    alert("백업 완료\\n총 " + records.length + "개의 기록이 저장되었습니다.");
-  }catch(e){
-    console.error(e);
-    alert("백업 중 오류가 발생했습니다.");
-  }
-}
-
 </script>
 
 </body>
